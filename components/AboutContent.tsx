@@ -67,9 +67,8 @@ export default function AboutContent() {
 
       {/* Overview */}
       <div className="bg-gradient-to-br from-indigo-600 to-blue-700 text-white rounded-2xl p-6">
-        <h2 className="text-lg font-bold mb-2">CONAN — COmprehensive Neoplasm ANalysis</h2>
         <p className="text-blue-100 text-sm leading-relaxed mb-3">
-          CONAN App uses validated mathematical and machine learning models to estimate lung cancer risk
+          CONAN uses validated mathematical and machine learning models to estimate lung cancer risk
           based on symptom profiles and/or chest X-ray imaging. It is designed as a screening and
           awareness tool to support early detection and informed healthcare decisions.
         </p>

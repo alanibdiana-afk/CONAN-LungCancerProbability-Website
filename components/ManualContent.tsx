@@ -13,7 +13,7 @@ const sections = [
     bg: "bg-blue-50",
     border: "border-blue-200",
     content: [
-      { step: "1", title: "Open CONAN App", desc: "Navigate to the home screen. You will see three primary assessment options." },
+      { step: "1", title: "Open CONAN", desc: "Navigate to the home screen. You will see three primary assessment options." },
       { step: "2", title: "Accept Privacy Policy", desc: "On first use, review and accept the Privacy Policy to enable full functionality." },
       { step: "3", title: "Optional Sign In", desc: "Sign in with your name and email to save and track results over time. This is optional — you can use the app without an account." },
       { step: "4", title: "Choose Assessment Type", desc: "Select one of the three pathways: Symptom Assessment, X-Ray Analysis, or Combined Assessment." },
@@ -27,7 +27,7 @@ const sections = [
     bg: "bg-blue-50",
     border: "border-blue-200",
     content: [
-      { step: "1", title: "Enter Personal Info (Optional)", desc: "Provide your age and gender for context. These fields are optional." },
+      { step: "1", title: "Enter Personal Info (Optional)", desc: "Provide your age and sex for context. These fields are optional." },
       { step: "2", title: "Answer Symptom Questions", desc: "For each of the 13 risk factors, select YES if you have/experience that factor, or NO if you do not. Click on the card or the YES/NO buttons." },
       { step: "3", title: "Review Your Selections", desc: "The progress bar shows how many factors you have marked as YES. Use the Reset button to start over." },
       { step: "4", title: "Analyze Risk", desc: "Click 'Analyze Risk' to submit. The model will calculate your risk level and confidence score." },
@@ -145,14 +145,14 @@ export default function ManualContent() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-slate-800">User Manual</h1>
-          <p className="text-sm text-slate-500">Step-by-step guidance for using CONAN App</p>
+          <p className="text-sm text-slate-500">Step-by-step guidance for using CONAN</p>
         </div>
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2">
         <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-800">
-          CONAN App is a <strong>screening and awareness tool only</strong>. Results are not a medical diagnosis.
+          CONAN is a <strong>screening and awareness tool only</strong>. Results are not a medical diagnosis.
           Always consult a qualified healthcare professional for clinical evaluation.
         </p>
       </div>

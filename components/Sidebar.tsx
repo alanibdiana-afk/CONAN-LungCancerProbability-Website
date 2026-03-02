@@ -66,7 +66,7 @@ export default function Sidebar() {
               <img src="/logo.png" alt="CONAN App Logo" className="w-full h-full object-cover" />
             </div>
             <div>
-              <h1 className="font-bold text-white text-base leading-tight">CONAN App</h1>
+              <h1 className="font-bold text-white text-base leading-tight">CONAN</h1>
               <p className="text-xs text-slate-400">Lung Cancer Risk Detection</p>
             </div>
           </div>

@@ -21,7 +21,7 @@ export default function Header() {
         <div className="w-8 h-8 rounded-lg overflow-hidden">
           <img src="/logo.png" alt="CONAN App Logo" className="w-full h-full object-cover" />
         </div>
-        <span className="font-bold text-slate-800 text-sm hidden sm:block">CONAN App</span>
+        <span className="font-bold text-slate-800 text-sm hidden sm:block">CONAN</span>
       </Link>
 
       <div className="flex items-center gap-1">

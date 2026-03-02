@@ -30,8 +30,8 @@ export default function PrivacyModal() {
           <div>
             <h3 className="font-semibold text-slate-800 mb-1">Data Collection</h3>
             <p>
-              CONAN App collects symptom inputs, uploaded images, and optional user profile
-              information (age and gender) solely for the purpose of generating risk assessments.
+              CONAN collects symptom inputs, uploaded images, and optional user profile
+              information (age and sex) solely for the purpose of generating risk assessments.
               No data is transmitted to external servers without your explicit consent.
             </p>
           </div>
@@ -46,7 +46,7 @@ export default function PrivacyModal() {
           <div>
             <h3 className="font-semibold text-slate-800 mb-1">Medical Disclaimer</h3>
             <p className="text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">
-              ⚠️ CONAN App is a screening and awareness tool only. Results are NOT a medical
+              ⚠️ CONAN is a screening and awareness tool only. Results are NOT a medical
               diagnosis and should NOT replace professional medical advice, diagnosis, or
               treatment. Always consult a qualified healthcare professional.
             </p>

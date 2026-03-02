@@ -10,9 +10,9 @@ const sections = [
     color: "text-blue-600",
     bg: "bg-blue-50",
     border: "border-blue-200",
-    content: `CONAN App collects the following information when you use it:
+    content: `CONAN collects the following information when you use it:
 • Symptom inputs (YES/NO answers to 13 risk factors)
-• Optional personal information (age, gender)
+• Optional personal information (age, sex)
 • Uploaded chest X-ray images (processed locally)
 • Assessment results and risk predictions
 • App settings and preferences
@@ -98,7 +98,7 @@ export default function PrivacyContent() {
         </div>
         <div>
           <h1 className="text-xl font-bold text-slate-800">Privacy Policy</h1>
-          <p className="text-sm text-slate-500">How CONAN App handles your data</p>
+          <p className="text-sm text-slate-500">How CONAN handles your data</p>
         </div>
       </div>
 
@@ -117,8 +117,8 @@ export default function PrivacyContent() {
 
       <div className="bg-white border border-slate-200 rounded-2xl p-5">
         <p className="text-sm text-slate-600 leading-relaxed">
-          CONAN App is committed to protecting your privacy. This policy explains what data we collect,
-          how we use it, and your rights as a user. By using CONAN App, you agree to the practices
+          CONAN is committed to protecting your privacy. This policy explains what data we collect,
+          how we use it, and your rights as a user. By using CONAN, you agree to the practices
           described in this policy. This app is designed with a <strong>privacy-first</strong> approach —
           your health data stays on your device.
         </p>
@@ -143,7 +143,7 @@ export default function PrivacyContent() {
         <p className="text-sm text-slate-600">
           If you have questions about this privacy policy or how your data is handled, please refer to
           the User Manual or contact the development team through the official project repository.
-          CONAN App is an academic/research project and does not have a commercial support channel.
+          CONAN is an academic/research project and does not have a commercial support channel.
         </p>
       </div>
     </div>

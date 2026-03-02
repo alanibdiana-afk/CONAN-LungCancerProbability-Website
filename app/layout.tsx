@@ -9,9 +9,9 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "CONAN App – Lung Cancer Risk Screening",
+  title: "CONAN – Lung Cancer Risk Screening",
   description:
-    "CONAN (COmprehensive Neoplasm ANalysis) – AI-assisted lung cancer risk screening tool for awareness and early detection guidance.",
+    "CONAN – AI-assisted lung cancer risk screening tool for awareness and early detection guidance.",
   creator: "Crisvin Habitsuela",
 };
 

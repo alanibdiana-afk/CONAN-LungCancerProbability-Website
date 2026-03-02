@@ -44,6 +44,129 @@
   --sidebar-text: #ffffff;
 }
 
+/* ── App shell background (normal mode) ── */
+.app-shell-bg {
+  background-color: #f0f4f8;
+}
+
+/* ════════════════════════════════════════════
+   HIGH CONTRAST MODE
+   Applied when context.tsx adds "high-contrast"
+   class to <html> element
+════════════════════════════════════════════ */
+
+html.high-contrast,
+html.high-contrast body,
+html.high-contrast .app-shell-bg {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+/* All divs, sections, articles, asides become dark */
+html.high-contrast div,
+html.high-contrast section,
+html.high-contrast article,
+html.high-contrast main,
+html.high-contrast nav {
+  background-color: transparent;
+  color: inherit;
+}
+
+/* Cards with explicit white/light backgrounds */
+html.high-contrast [class*="bg-white"],
+html.high-contrast [class*="bg-slate-50"],
+html.high-contrast [class*="bg-slate-100"] {
+  background-color: #111111 !important;
+  color: #ffffff !important;
+}
+
+/* Header bar */
+html.high-contrast header {
+  background-color: #000000 !important;
+  border-color: #ffffff !important;
+}
+
+/* All text elements */
+html.high-contrast [class*="text-slate-"],
+html.high-contrast [class*="text-gray-"] {
+  color: #ffffff !important;
+}
+
+html.high-contrast [class*="text-slate-4"],
+html.high-contrast [class*="text-slate-5"] {
+  color: #cccccc !important;
+}
+
+/* Borders */
+html.high-contrast [class*="border-slate-"],
+html.high-contrast [class*="border-gray-"] {
+  border-color: #555555 !important;
+}
+
+/* Inputs, selects, textareas */
+html.high-contrast input,
+html.high-contrast select,
+html.high-contrast textarea {
+  background-color: #222222 !important;
+  color: #ffffff !important;
+  border-color: #888888 !important;
+}
+
+html.high-contrast input::placeholder {
+  color: #aaaaaa !important;
+}
+
+html.high-contrast select option {
+  background-color: #222222 !important;
+  color: #ffffff !important;
+}
+
+/* Buttons */
+html.high-contrast button {
+  color: #ffffff !important;
+}
+
+/* Amber/warning banners */
+html.high-contrast [class*="bg-amber-"] {
+  background-color: #2a1f00 !important;
+}
+
+html.high-contrast [class*="text-amber-"] {
+  color: #fcd34d !important;
+}
+
+html.high-contrast [class*="border-amber-"] {
+  border-color: #fcd34d !important;
+}
+
+/* Blue tinted cards (selected symptoms etc.) */
+html.high-contrast [class*="bg-blue-50"] {
+  background-color: #0d1b2e !important;
+}
+
+html.high-contrast [class*="text-blue-8"] {
+  color: #93c5fd !important;
+}
+
+/* Gradient banners become solid dark */
+html.high-contrast [class*="bg-gradient-"] {
+  background: #111111 !important;
+  color: #ffffff !important;
+}
+
+/* Risk result cards */
+html.high-contrast [class*="bg-green-50"] { background-color: #0a2010 !important; }
+html.high-contrast [class*="bg-yellow-50"] { background-color: #1f1a00 !important; }
+html.high-contrast [class*="bg-red-50"] { background-color: #200a0a !important; }
+html.high-contrast [class*="text-green-7"] { color: #6ee7b7 !important; }
+html.high-contrast [class*="text-yellow-7"] { color: #fde68a !important; }
+html.high-contrast [class*="text-red-7"] { color: #fca5a5 !important; }
+
+/* Rounded cards / panels with border */
+html.high-contrast [class*="rounded-"][class*="border"] {
+  border-color: #444444 !important;
+}
+
 * {
   box-sizing: border-box;
 }

@@ -63,7 +63,7 @@ export default function HomeContent() {
             AI-Assisted Screening Tool
           </div>
           <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-3">
-            CONAN App
+            CONAN
           </h1>
           <p className="text-blue-100 text-sm md:text-base leading-relaxed mb-2">
       An AI-assisted lung cancer
@@ -86,7 +86,7 @@ export default function HomeContent() {
       <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
         <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
         <p className="text-sm text-amber-800">
-          <strong>Medical Disclaimer:</strong> CONAN App is a screening and awareness tool only.
+          <strong>Medical Disclaimer:</strong> CONAN is a screening and awareness tool only.
           Results are <strong>NOT a medical diagnosis</strong> and should not replace professional
           medical advice, diagnosis, or treatment. Always consult a qualified healthcare professional.
         </p>

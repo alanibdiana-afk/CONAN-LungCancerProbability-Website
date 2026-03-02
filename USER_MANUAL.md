@@ -1,10 +1,10 @@
-# CONAN App User Manual
+# CONAN User Manual
 **AI-Assisted Lung Cancer Risk Screening Tool**
 
 ---
 
 ## 📋 Table of Contents
-1. [About CONAN App](#about-conan-app)
+1. [About CONAN](#about-conan-app)
 2. [AI Model Training & Accuracy](#ai-model-training--accuracy)
 3. [System Architecture](#system-architecture)
 4. [Getting Started](#getting-started)
@@ -20,9 +20,9 @@
 
 ---
 
-## 🏥 About CONAN App
+## 🏥 About CONAN
 
-CONAN App is a **screening and awareness tool** designed to help assess lung cancer risk factors. It provides three assessment pathways:
+CONAN is a **screening and awareness tool** designed to help assess lung cancer risk factors. It provides three assessment pathways:
 
 - **Health Background Assessment** – 13 clinical risk factors
 - **Chest X-Ray Analysis** – AI-assisted chest X-ray evaluation  
@@ -44,7 +44,7 @@ CONAN App is a **screening and awareness tool** designed to help assess lung can
 - **Quality Control**: Removed incomplete records, standardized formats
 
 **2. Feature Engineering**
-- **Clinical Factors**: Age, gender, smoking history, symptoms (13 factors)
+- **Clinical Factors**: Age, Sex, smoking history, symptoms (13 factors)
 - **Imaging Features**: Extracted from chest X-rays using computer vision
 - **Normalization**: Scaled numerical features, encoded categorical variables
 - **Feature Selection**: Statistical analysis to identify most predictive factors
@@ -243,7 +243,7 @@ graph TD
 - Device with camera/file upload capability (for X-ray images)
 
 ### First-Time Setup
-1. **Open the App**: Navigate to the CONAN App URL
+1. **Open the App**: Navigate to the CONAN URL
 2. **Privacy Consent**: Review and accept the Privacy Policy
 3. **Optional Sign In**: Create an account to save results (recommended)
 4. **Accessibility Settings**: Adjust font size and contrast if needed
@@ -480,7 +480,7 @@ If your assessment indicates a **High Risk** level, please consult a licensed he
 
 ## 🧮 Risk Assessment Formulas
 
-The CONAN App uses evidence-based mathematical formulas to calculate lung cancer risk. Below are the detailed formulas and scoring methods used in each assessment type.
+The CONAN uses evidence-based mathematical formulas to calculate lung cancer risk. Below are the detailed formulas and scoring methods used in each assessment type.
 
 ### 1. Health Background Assessment
 
@@ -613,9 +613,9 @@ These formulas ensure consistent, reproducible risk assessments while maintainin
 ## 🔒 Privacy & Data
 
 ### Data Collection
-CONAN App collects:
+CONAN collects:
 - ✅ Symptom inputs (YES/NO answers)
-- ✅ Optional personal info (age, gender)
+- ✅ Optional personal info (age, sex)
 - ✅ Assessment results
 - ✅ App settings and preferences
 
@@ -689,7 +689,7 @@ CONAN App collects:
 ## ⚠️ Important Disclaimers
 
 ### Medical Disclaimer
-- CONAN App is **NOT a diagnostic tool**
+- CONAN is **NOT a diagnostic tool**
 - Results are for **screening and awareness only**
 - **Always consult healthcare professionals** for medical concerns
 - **Never delay medical care** based on app results
@@ -770,5 +770,5 @@ CONAN App collects:
 
 ---
 
-**© 2026 CONAN App – Developed by Crisvin Habitsuela**  
+**© 2026 CONAN – Developed by Crisvin Habitsuela**  
 *Project: Bulan High School – AI-Assisted Lung Cancer Risk Screening Tool*
