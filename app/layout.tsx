@@ -12,7 +12,6 @@ export const metadata: Metadata = {
   title: "CONAN – Lung Cancer Risk Screening",
   description:
     "CONAN – AI-assisted lung cancer risk screening tool for awareness and early detection guidance.",
-  creator: "Crisvin Habitsuela",
 };
 
 export default function RootLayout({
