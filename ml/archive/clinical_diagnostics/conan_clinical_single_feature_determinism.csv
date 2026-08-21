@@ -1,0 +1,24 @@
+Feature,Unique_values,Deterministic_values,Deterministic_fraction
+Chest Pain,9,4,0.4444444444444444
+Passive Smoker,8,3,0.375
+Fatigue,8,3,0.375
+Age,40,14,0.35
+Obesity,7,2,0.2857142857142857
+Dust Allergy,8,2,0.25
+OccuPational Hazards,8,2,0.25
+Wheezing,8,2,0.25
+Shortness of Breath,8,2,0.25
+Air Pollution,8,2,0.25
+Coughing of Blood,9,2,0.2222222222222222
+Balanced Diet,7,1,0.14285714285714285
+chronic Lung Disease,7,1,0.14285714285714285
+Genetic Risk,7,1,0.14285714285714285
+Frequent Cold,7,1,0.14285714285714285
+Snoring,7,1,0.14285714285714285
+Smoking,8,1,0.125
+Weight Loss,8,1,0.125
+Swallowing Difficulty,8,1,0.125
+Clubbing of Finger Nails,9,1,0.1111111111111111
+Gender,2,0,0.0
+Alcohol use,8,0,0.0
+Dry Cough,7,0,0.0

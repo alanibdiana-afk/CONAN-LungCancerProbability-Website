@@ -1,0 +1,46 @@
+CONAN — PLCOm2012-INSPIRED ADAPTED CLINICAL β-RISK EQUATION
+================================================================================
+
+This is a CONAN-specific adapted risk equation.
+It does NOT reproduce the original PLCOm2012 equation.
+
+Linear predictor:
+
+LP = (-21.667727357138) + 0.044663338418*[Age] - 0.250751770975*[Gender] - 0.013288334756*[Air Pollution] + 0.144886153340*[Alcohol use] + 0.333119948121*[Dust Allergy] + 0.005768719697*[OccuPational Hazards] + 0.297622024513*[Genetic Risk] + 0.114704497800*[chronic Lung Disease] - 0.125540743878*[Balanced Diet] + 0.753604796808*[Obesity] - 0.107073162087*[Smoking] + 0.504151071500*[Passive Smoker] - 0.179706173037*[Chest Pain] + 0.453786895739*[Coughing of Blood] + 0.422754772929*[Fatigue] - 0.152548962075*[Weight Loss] + 0.113028747256*[Shortness of Breath] + 0.818001325836*[Wheezing] + 0.469533989896*[Swallowing Difficulty] + 0.580054475047*[Clubbing of Finger Nails] + 0.466644376409*[Frequent Cold] + 0.364623335749*[Dry Cough] + 0.834056297863*[Snoring]
+
+Probability:
+
+P(clinical risk) = 1 / (1 + exp(-LP))
+
+Risk categories:
+LOW       : P < 0.33
+MODERATE  : 0.33 <= P < 0.66
+HIGH      : P >= 0.66
+
+β coefficients:
+
+                 Feature       Beta
+               Intercept -21.667727
+                     Age   0.044663
+                  Gender  -0.250752
+           Air Pollution  -0.013288
+             Alcohol use   0.144886
+            Dust Allergy   0.333120
+    OccuPational Hazards   0.005769
+            Genetic Risk   0.297622
+    chronic Lung Disease   0.114704
+           Balanced Diet  -0.125541
+                 Obesity   0.753605
+                 Smoking  -0.107073
+          Passive Smoker   0.504151
+              Chest Pain  -0.179706
+       Coughing of Blood   0.453787
+                 Fatigue   0.422755
+             Weight Loss  -0.152549
+     Shortness of Breath   0.113029
+                Wheezing   0.818001
+   Swallowing Difficulty   0.469534
+Clubbing of Finger Nails   0.580054
+           Frequent Cold   0.466644
+               Dry Cough   0.364623
+                 Snoring   0.834056

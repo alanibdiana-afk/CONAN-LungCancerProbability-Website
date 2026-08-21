@@ -1,0 +1,4 @@
+Class,Sensitivity,Specificity,Precision,F1_Score,TP,TN,FP,FN,ROC_AUC
+HIGH,1.0,1.0,1.0,1.0,365,635,0,0,1.0
+LOW,1.0,1.0,1.0,1.0,303,697,0,0,1.0
+MEDIUM,1.0,1.0,1.0,1.0,332,668,0,0,1.0

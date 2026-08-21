@@ -1,0 +1,9 @@
+Metric,Value
+Sensitivity,1.0
+Specificity,1.0
+Precision,1.0
+F1-score,1.0
+ROC-AUC,1.0
+Weighted ROC-AUC,1.0
+Calibration Log Loss,0.025436863605276732
+Macro Brier Score,0.001340107391390992

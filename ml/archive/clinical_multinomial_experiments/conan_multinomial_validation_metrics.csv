@@ -1,0 +1,8 @@
+Metric,Value
+ROC_AUC,1.0
+Accuracy,1.0
+Balanced_Accuracy,1.0
+Precision,1.0
+Recall,1.0
+F1,1.0
+LogLoss,0.0756947803239218

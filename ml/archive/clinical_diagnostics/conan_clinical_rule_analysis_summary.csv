@@ -1,0 +1,8 @@
+Metric,Value
+Patients,1000.0
+Clinical_variables,23.0
+Unique_clinical_patterns,152.0
+Repeated_pattern_rows,848.0
+Conflicting_patterns,0.0
+Mean_pattern_entropy,0.0
+Random_label_CV_accuracy,0.31199999999999994

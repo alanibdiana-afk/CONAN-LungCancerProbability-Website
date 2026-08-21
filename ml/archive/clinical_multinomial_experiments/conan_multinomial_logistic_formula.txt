@@ -1,0 +1,23 @@
+CONAN DATASET-DERIVED MULTINOMIAL LOGISTIC RISK MODEL
+================================================================================
+
+Risk categories:
+LOW, MODERATE, HIGH
+
+Clinical variables: 23
+
+z_LOW = (17.063201766921) - 0.023505157866*[Age] + 0.118619512945*[Gender] - 0.065464239627*[Air Pollution] - 0.098015108570*[Alcohol use] - 0.229271640962*[Dust Allergy] - 0.052659991308*[OccuPational Hazards] - 0.205756223791*[Genetic Risk] - 0.148517643460*[chronic Lung Disease] - 0.017475643201*[Balanced Diet] - 0.416053902024*[Obesity] + 0.010223005912*[Smoking] - 0.303433764106*[Passive Smoker] + 0.034969536544*[Chest Pain] - 0.279327276555*[Coughing of Blood] - 0.300431343289*[Fatigue] - 0.049730873251*[Weight Loss] - 0.126340519582*[Shortness of Breath] - 0.419162647697*[Wheezing] - 0.314922625864*[Swallowing Difficulty] - 0.325255526312*[Clubbing of Finger Nails] - 0.310290034147*[Frequent Cold] - 0.213876186294*[Dry Cough] - 0.423272724844*[Snoring]
+
+z_MODERATE = (0.022871748619) + 0.031003921115*[Age] - 0.244458755672*[Gender] - 0.223213277273*[Air Pollution] - 0.076219871105*[Alcohol use] + 0.241957558606*[Dust Allergy] + 0.016452144720*[OccuPational Hazards] + 0.091935712514*[Genetic Risk] - 0.056385108884*[chronic Lung Disease] - 0.186919379215*[Balanced Diet] + 0.143909301124*[Obesity] - 0.109180260945*[Smoking] - 0.043252024031*[Passive Smoker] - 0.071806277063*[Chest Pain] - 0.024959280921*[Coughing of Blood] - 0.073999065447*[Fatigue] - 0.138187337091*[Weight Loss] - 0.080179953738*[Shortness of Breath] + 0.338881245331*[Wheezing] + 0.016465000885*[Swallowing Difficulty] + 0.163290504189*[Clubbing of Finger Nails] + 0.094707757058*[Frequent Cold] - 0.004742691311*[Dry Cough] + 0.254216250593*[Snoring]
+
+z_HIGH = (-17.086073515540) - 0.007498763249*[Age] + 0.125839242728*[Gender] + 0.288677516900*[Air Pollution] + 0.174234979675*[Alcohol use] - 0.012685917644*[Dust Allergy] + 0.036207846587*[OccuPational Hazards] + 0.113820511277*[Genetic Risk] + 0.204902752343*[chronic Lung Disease] + 0.204395022417*[Balanced Diet] + 0.272144600900*[Obesity] + 0.098957255034*[Smoking] + 0.346685788137*[Passive Smoker] + 0.036836740519*[Chest Pain] + 0.304286557476*[Coughing of Blood] + 0.374430408736*[Fatigue] + 0.187918210342*[Weight Loss] + 0.206520473320*[Shortness of Breath] + 0.080281402367*[Wheezing] + 0.298457624979*[Swallowing Difficulty] + 0.161965022123*[Clubbing of Finger Nails] + 0.215582277090*[Frequent Cold] + 0.218618877605*[Dry Cough] + 0.169056474251*[Snoring]
+
+Probability equations:
+
+P(LOW) = exp(z_LOW) / (exp(z_LOW) + exp(z_MODERATE) + exp(z_HIGH))
+
+P(MODERATE) = exp(z_MODERATE) / (exp(z_LOW) + exp(z_MODERATE) + exp(z_HIGH))
+
+P(HIGH) = exp(z_HIGH) / (exp(z_LOW) + exp(z_MODERATE) + exp(z_HIGH))
+
+Final risk category = category with maximum probability.

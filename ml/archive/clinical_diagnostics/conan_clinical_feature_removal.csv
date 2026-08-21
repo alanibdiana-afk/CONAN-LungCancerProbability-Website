@@ -1,0 +1,5 @@
+Removed_top_n,Removed_features,Remaining_features,Mean_CV_Accuracy,Std_CV_Accuracy
+1,Obesity,22,1.0,0.0
+3,"Obesity, Coughing of Blood, Passive Smoker",20,0.999,0.0020000000000000018
+5,"Obesity, Coughing of Blood, Passive Smoker, Balanced Diet, Dust Allergy",18,0.999,0.0020000000000000018
+10,"Obesity, Coughing of Blood, Passive Smoker, Balanced Diet, Dust Allergy, Alcohol use, Genetic Risk, Air Pollution, OccuPational Hazards, Chest Pain",13,0.99,0.009486832980505146

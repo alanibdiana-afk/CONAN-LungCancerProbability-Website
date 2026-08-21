@@ -1,0 +1,24 @@
+CONAN — CLINICAL β FORMULA
+================================================================================
+
+IMPORTANT:
+These coefficients were learned from the CONAN clinical dataset.
+They are NOT the original PLCOm2012 coefficients.
+
+Best C = 10.0
+
+z_LOW = (45.025573602791) - (0.048735546600)*Age + (0.046643878839)*Gender - (0.197300056262)*Air Pollution - (0.261667176198)*Alcohol use - (0.615227566939)*Dust Allergy + (0.129523086055)*OccuPational Hazards - (0.522555440262)*Genetic Risk - (0.455545394258)*chronic Lung Disease - (0.088575628427)*Balanced Diet - (1.278684245073)*Obesity - (0.079670950072)*Smoking - (1.096354960057)*Passive Smoker + (0.318277752749)*Chest Pain - (0.881675326878)*Coughing of Blood - (0.764670544920)*Fatigue + (0.062045821413)*Weight Loss - (0.297365441901)*Shortness of Breath - (1.118337358771)*Wheezing - (0.912643603289)*Swallowing Difficulty - (0.863525188848)*Clubbing of Finger Nails - (0.808550833568)*Frequent Cold - (0.587789416979)*Dry Cough - (1.164804732414)*Snoring
+
+z_MODERATE = (-2.790557089427) + (0.052152445078)*Age - (0.387094374000)*Gender - (0.532142393975)*Air Pollution - (0.216437887887)*Alcohol use + (0.809535344524)*Dust Allergy - (0.221301364584)*OccuPational Hazards + (0.307837279621)*Genetic Risk - (0.108718510039)*chronic Lung Disease - (0.385427833732)*Balanced Diet + (0.632691326321)*Obesity + (0.028379841885)*Smoking + (0.162815123268)*Passive Smoker - (0.389055126287)*Chest Pain + (0.017118688640)*Coughing of Blood - (0.159644250354)*Fatigue - (0.446773084755)*Weight Loss - (0.281528962694)*Shortness of Breath + (0.909051933670)*Wheezing - (0.101102406884)*Swallowing Difficulty + (0.391624751917)*Clubbing of Finger Nails + (0.308341140416)*Frequent Cold + (0.195139579125)*Dry Cough + (0.625684884654)*Snoring
+
+z_HIGH = (-42.235016513364) - (0.003416898478)*Age + (0.340450495161)*Gender + (0.729442450237)*Air Pollution + (0.478105064085)*Alcohol use - (0.194307777585)*Dust Allergy + (0.091778278529)*OccuPational Hazards + (0.214718160641)*Genetic Risk + (0.564263904297)*chronic Lung Disease + (0.474003462159)*Balanced Diet + (0.645992918752)*Obesity + (0.051291108187)*Smoking + (0.933539836789)*Passive Smoker + (0.070777373537)*Chest Pain + (0.864556638238)*Coughing of Blood + (0.924314795274)*Fatigue + (0.384727263342)*Weight Loss + (0.578894404595)*Shortness of Breath + (0.209285425101)*Wheezing + (1.013746010173)*Swallowing Difficulty + (0.471900436930)*Clubbing of Finger Nails + (0.500209693152)*Frequent Cold + (0.392649837854)*Dry Cough + (0.539119847760)*Snoring
+
+
+PROBABILITY EQUATIONS
+--------------------------------------------------------------------------------
+
+P(LOW) = exp(z_LOW) / [exp(z_LOW) + exp(z_MODERATE) + exp(z_HIGH)]
+
+P(MODERATE) = exp(z_MODERATE) / [exp(z_LOW) + exp(z_MODERATE) + exp(z_HIGH)]
+
+P(HIGH) = exp(z_HIGH) / [exp(z_LOW) + exp(z_MODERATE) + exp(z_HIGH)]

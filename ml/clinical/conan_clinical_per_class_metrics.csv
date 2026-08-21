@@ -1,0 +1,4 @@
+Class,Sensitivity,Specificity,Precision,F1_score,TP,TN,FP,FN
+LOW,1.0,1.0,1.0,1.0,303,697,0,0
+MODERATE,1.0,1.0,1.0,1.0,332,668,0,0
+HIGH,1.0,1.0,1.0,1.0,365,635,0,0

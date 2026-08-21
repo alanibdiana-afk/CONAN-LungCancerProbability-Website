@@ -1,0 +1,22 @@
+|--- Coughing of Blood <= 5.50
+|   |--- Wheezing <= 4.50
+|   |   |--- Snoring <= 4.50
+|   |   |   |--- Obesity <= 4.50
+|   |   |   |   |--- class: Low
+|   |   |   |--- Obesity >  4.50
+|   |   |   |   |--- class: Medium
+|   |   |--- Snoring >  4.50
+|   |   |   |--- class: Medium
+|   |--- Wheezing >  4.50
+|   |   |--- class: Medium
+|--- Coughing of Blood >  5.50
+|   |--- OccuPational Hazards <= 7.50
+|   |   |--- Obesity <= 2.50
+|   |   |   |--- class: Low
+|   |   |--- Obesity >  2.50
+|   |   |   |--- Clubbing of Finger Nails <= 1.50
+|   |   |   |   |--- class: Medium
+|   |   |   |--- Clubbing of Finger Nails >  1.50
+|   |   |   |   |--- class: High
+|   |--- OccuPational Hazards >  7.50
+|   |   |--- class: Medium

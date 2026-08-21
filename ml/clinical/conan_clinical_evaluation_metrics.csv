@@ -1,0 +1,11 @@
+Metric,Value
+Accuracy,1.0
+Balanced Accuracy,1.0
+Sensitivity,1.0
+Specificity,1.0
+Precision,1.0
+F1-score,1.0
+ROC-AUC,1.0
+Weighted ROC-AUC,1.0
+Log Loss,0.02546291426873502
+Mean Brier Score,0.0013398244696216268
