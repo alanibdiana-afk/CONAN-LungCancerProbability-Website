@@ -8,10 +8,10 @@ const options = [
   {
     href: "/symptoms",
     icon: Activity,
-    title: "Health Background Assessment",
+    title: "Clinical Data Risk Assessment",
     subtitle: "Option 1",
     description:
-      "Answer questions about your symptoms and health history. Our model analyzes 13 key risk factors to estimate your lung cancer risk level.",
+      "Answer questions about your symptoms and health history. Our model analyzes 23 key risk factors to estimate your lung cancer risk level.",
     color: "from-blue-500 to-blue-700",
     bg: "bg-blue-50",
     border: "border-blue-200",
@@ -24,7 +24,7 @@ const options = [
     title: "Chest X-Ray Analysis",
     subtitle: "Option 2",
     description:
-      "Upload a chest X-ray image for AI-assisted analysis. Our imaging model preprocesses and evaluates the scan for potential abnormalities.",
+      "Upload a chest X-ray image for risk analysis. Our imaging model preprocesses and evaluates the scan for potential abnormalities.",
     color: "from-purple-500 to-purple-700",
     bg: "bg-purple-50",
     border: "border-purple-200",
@@ -37,7 +37,7 @@ const options = [
     title: "Combined Assessment",
     subtitle: "Option 3",
     description:
-      "Combine symptom data with chest X-ray imaging for a more comprehensive integrated risk analysis and prediction.",
+      "Combine clinical data with chest X-ray imaging for a more comprehensive integrated risk analysis and prediction.",
     color: "from-teal-500 to-teal-700",
     bg: "bg-teal-50",
     border: "border-teal-200",

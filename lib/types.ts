@@ -1,21 +1,5 @@
 export type RiskLevel = "low" | "moderate" | "high";
 
-export interface SymptomFormData {
-  coughing: boolean;
-  shortnessOfBreath: boolean;
-  swallowingDifficulty: boolean;
-  chestPain: boolean;
-  wheezing: boolean;
-  fatigue: boolean;
-  allergy: boolean;
-  smokingHistory: boolean;
-  yellowFingers: boolean;
-  anxiety: boolean;
-  peerPressure: boolean;
-  chronicDisease: boolean;
-  alcoholConsuming: boolean;
-}
-
 export interface UserInfo {
   age: number | null;
   gender: "male" | "female" | null;
