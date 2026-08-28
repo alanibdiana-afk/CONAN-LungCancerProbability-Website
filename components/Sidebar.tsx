@@ -25,7 +25,7 @@ import {
 
 const navItems = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/symptoms", label: "Health Background Assessment", icon: Activity },
+  { href: "/symptoms", label: "Clinical Risk Assessment", icon: Activity },
   { href: "/imaging", label: "Chest X-Ray Analysis", icon: Image },
   { href: "/combined", label: "Combined Assessment", icon: Layers },
   { href: "/dashboard", label: "Results Dashboard", icon: BarChart2 },
@@ -169,7 +169,7 @@ export default function Sidebar() {
         {/* Footer with developer credit */}
         <div className="border-t border-slate-700 px-4 py-3 mt-auto">
           <p className="text-xs text-slate-400 text-center">
-            Developed by Crisvin Habitsuela
+            Developed by D.R. Alanib, S.F. Gojar, V.T. Gadil
           </p>
         </div>
       </aside>

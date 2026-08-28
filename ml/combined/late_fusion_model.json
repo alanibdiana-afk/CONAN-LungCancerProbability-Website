@@ -1,0 +1,26 @@
+{
+    "model": "Transparent probability-based late fusion",
+    "model_type": "reference_probability_fusion",
+    "clinical_source": "D:\\CONAN datasets\\Conan-App\\ml\\clinical\\conan_clinical_oof_predictions.csv",
+    "imaging_source": "D:\\CONAN datasets\\Conan-App\\ml\\imaging\\evaluation\\imaging_predictions.csv",
+    "clinical_weight": 0.5,
+    "imaging_weight": 0.5,
+    "clinical_reference_high_probability": 0.36520996906165304,
+    "clinical_reference_moderate_probability": 0.3316257177305547,
+    "clinical_reference_low_probability": 0.30316431320779225,
+    "risk_thresholds": {
+        "LOW": "< 5%",
+        "MODERATE": "5% to 65%",
+        "HIGH": "> 65%"
+    },
+    "inputs": [
+        "clinical_reference_probability",
+        "imaging_probability"
+    ],
+    "output": "LOW / MODERATE / HIGH",
+    "clinical_rows": 1000,
+    "imaging_rows": 247,
+    "patient_level_pairing": false,
+    "training_note": "No patient-level clinical-imaging pairing was available. Fusion therefore uses a transparent reference clinical probability and case-level imaging probability.",
+    "evaluation_note": "This output must not be interpreted as patient-level validated fusion performance."
+}

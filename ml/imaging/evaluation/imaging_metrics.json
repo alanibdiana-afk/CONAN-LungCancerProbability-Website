@@ -1,0 +1,15 @@
+{
+    "evaluation_type": "reference_development_set",
+    "sample_count": 247,
+    "decision_threshold": 0.5,
+    "sensitivity": 1.0,
+    "specificity": 0.5170068027210885,
+    "precision": 0.5847953216374269,
+    "f1_score": 0.7380073800738007,
+    "roc_auc": 0.9984353741496598,
+    "brier_score": 0.1921780838765844,
+    "true_positive": 100,
+    "true_negative": 76,
+    "false_positive": 71,
+    "false_negative": 0
+}

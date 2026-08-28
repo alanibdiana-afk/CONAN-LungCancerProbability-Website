@@ -1,0 +1,18 @@
+{
+  "imaging": {
+    "cases": 247,
+    "Sensitivity": 1.0,
+    "Specificity": 0.5170068027210885,
+    "Precision": 0.5847953216374269,
+    "F1-Score": 0.7380073800738007,
+    "ROC-AUC": 0.9984353741496598,
+    "Brier Score": 0.1921780838765844
+  },
+  "late_fusion": {
+    "available": false,
+    "metrics": null,
+    "macro_ROC_AUC": null,
+    "multiclass_Brier_Score": null
+  },
+  "models_modified": false
+}

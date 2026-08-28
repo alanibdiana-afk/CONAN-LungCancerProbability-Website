@@ -1,0 +1,20 @@
+{
+    "LOW": {
+        "sensitivity": 0.010752688172043012,
+        "specificity": 0.6493506493506493,
+        "precision": 0.01818181818181818,
+        "f1_score": 0.013513513513513514
+    },
+    "MODERATE": {
+        "sensitivity": 0.0,
+        "specificity": 0.8238341968911918,
+        "precision": 0.0,
+        "f1_score": 0.0
+    },
+    "HIGH": {
+        "sensitivity": 1.0,
+        "specificity": 0.6054421768707483,
+        "precision": 0.6329113924050633,
+        "f1_score": 0.7751937984496124
+    }
+}

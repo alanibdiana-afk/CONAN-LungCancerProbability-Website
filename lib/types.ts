@@ -26,3 +26,19 @@ export interface AppSettings {
   contrastMode: boolean;
   privacyConsented: boolean;
 }
+
+export interface SymptomFormData {
+  smokingHistory: boolean;
+  coughing: boolean;
+  chestPain: boolean;
+  shortnessOfBreath: boolean;
+  wheezing: boolean;
+  yellowFingers: boolean;
+  swallowingDifficulty: boolean;
+  fatigue: boolean;
+  chronicDisease: boolean;
+  alcoholConsuming: boolean;
+  peerPressure: boolean;
+  allergy: boolean;
+  anxiety: boolean;
+}

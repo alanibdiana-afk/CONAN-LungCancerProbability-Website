@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -565,7 +565,7 @@ export default function SymptomsForm() {
       setLoading(true);
 
       const response = await fetch(
-        "/API/clinical-risk",
+        "/api/clinical-risk",
         {
           method: "POST",
           headers: {
@@ -936,7 +936,7 @@ export default function SymptomsForm() {
 
         {!user && (
           <p className="text-xs text-slate-500 mb-3">
-            💡{" "}
+            ðŸ’¡{" "}
             <a
               href="/login"
               className="text-blue-600 underline"

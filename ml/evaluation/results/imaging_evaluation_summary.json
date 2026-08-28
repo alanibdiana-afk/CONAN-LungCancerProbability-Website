@@ -1,0 +1,43 @@
+{
+  "model": "CONAN Imaging Model",
+  "samples": 247,
+  "risk_thresholds": {
+    "LOW": "< 5%",
+    "MODERATE": "5% to 65%",
+    "HIGH": "> 65%"
+  },
+  "class_metrics": {
+    "LOW": {
+      "Sensitivity": 0.010752688172043012,
+      "Specificity": 0.6493506493506493,
+      "Precision": 0.01818181818181818,
+      "F1-Score": 0.013513513513513514,
+      "TN": 100,
+      "FP": 54,
+      "FN": 92,
+      "TP": 1
+    },
+    "MODERATE": {
+      "Sensitivity": 0.0,
+      "Specificity": 0.8238341968911918,
+      "Precision": 0.0,
+      "F1-Score": 0.0,
+      "TN": 159,
+      "FP": 34,
+      "FN": 54,
+      "TP": 0
+    },
+    "HIGH": {
+      "Sensitivity": 1.0,
+      "Specificity": 0.6054421768707483,
+      "Precision": 0.6329113924050633,
+      "F1-Score": 0.7751937984496124,
+      "TN": 89,
+      "FP": 58,
+      "FN": 0,
+      "TP": 100
+    }
+  },
+  "binary_high_risk_roc_auc": 0.9984353741496598,
+  "binary_brier_score": 0.1921780838765844
+}

@@ -1,0 +1,17 @@
+{
+  "evaluation_definition": "Binary screening evaluation. The Imaging Model uses its native sigmoid probability. Late Fusion is evaluated as the probability of an elevated screening-risk state (MODERATE + HIGH).",
+  "imaging": {
+    "samples": 247,
+    "binary_threshold": 0.5,
+    "sensitivity": 1.0,
+    "specificity": 0.5170068027210885,
+    "precision": 0.5847953216374269,
+    "f1_score": 0.7380073800738007,
+    "roc_auc": 0.9984353741496598,
+    "brier_score": 0.1921780838765844
+  },
+  "late_fusion": {
+    "available": false,
+    "reason": "No verified paired multimodal evaluation dataset."
+  }
+}

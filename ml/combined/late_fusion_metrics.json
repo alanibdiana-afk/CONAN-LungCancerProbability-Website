@@ -1,0 +1,16 @@
+{
+    "evaluation_type": "descriptive_reference_only",
+    "patient_level_validation": false,
+    "clinical_sample_count": 1000,
+    "imaging_sample_count": 247,
+    "clinical_reference_high_probability": 0.36520996906165304,
+    "imaging_probability_mean": 0.6575591928946137,
+    "imaging_probability_median": 0.8599573373794556,
+    "fused_probability_mean": 0.5113845809781333,
+    "fused_probability_median": 0.6125836532205543,
+    "predicted_risk_distribution": {
+        "MODERATE": 139,
+        "HIGH": 108
+    },
+    "note": "No accuracy, sensitivity, specificity, precision, ROC-AUC, or F1-score is reported because the clinical and imaging datasets are not patient-level paired."
+}

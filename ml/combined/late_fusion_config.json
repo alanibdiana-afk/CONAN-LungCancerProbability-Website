@@ -1,0 +1,15 @@
+{
+    "clinical_weight": 0.5,
+    "imaging_weight": 0.5,
+    "low_threshold": 0.05,
+    "high_threshold": 0.65,
+    "clinical_reference_high_probability": 0.36520996906165304,
+    "clinical_reference_moderate_probability": 0.3316257177305547,
+    "clinical_reference_low_probability": 0.30316431320779225,
+    "risk_labels": {
+        "0": "LOW",
+        "1": "MODERATE",
+        "2": "HIGH"
+    },
+    "pairing_required": false
+}
