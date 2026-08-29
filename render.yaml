@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: conan-imaging-api
+    runtime: python
+    buildCommand: pip install -r ml/imaging/requirements.txt
+    startCommand: uvicorn ml.imaging.predict_imaging:app --host 0.0.0.0 --port $PORT
