@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: conan-lung-imaging-api
-    runtime: python
-    buildCommand: pip install -r ml/imaging/requirements.txt
-    startCommand: python -m uvicorn ml.imaging.predict_imaging:app --host 0.0.0.0 --port $PORT
