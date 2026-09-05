@@ -22,11 +22,6 @@ Final risk = class with highest probability
 import numpy as np
 import pandas as pd
 
-
-# ============================================================
-# CONAN CLINICAL VARIABLES
-# ============================================================
-
 FEATURES = [
     "Age",
     "Gender",
@@ -52,11 +47,6 @@ FEATURES = [
     "Dry Cough",
     "Snoring",
 ]
-
-
-# ============================================================
-# VALIDATED TRAINING-SET β COEFFICIENTS
-# ============================================================
 
 INTERCEPTS = {
     "HIGH": -15.943643818696,
@@ -146,11 +136,6 @@ BETAS = {
     },
 }
 
-
-# ============================================================
-# CALCULATE LOGITS
-# ============================================================
-
 def calculate_logits(patient):
     """
     Calculate z_LOW, z_MODERATE and z_HIGH.
@@ -177,11 +162,6 @@ def calculate_logits(patient):
 
     return logits
 
-
-# ============================================================
-# SOFTMAX PROBABILITY
-# ============================================================
-
 def softmax(logits):
 
     values = np.array([
@@ -202,11 +182,6 @@ def softmax(logits):
         "MODERATE": float(probabilities[1]),
         "HIGH": float(probabilities[2]),
     }
-
-
-# ============================================================
-# FINAL CLINICAL RISK PREDICTION
-# ============================================================
 
 def predict_clinical_risk(patient):
 
@@ -232,11 +207,6 @@ def predict_clinical_risk(patient):
         "z_high": logits["HIGH"],
     }
 
-
-# ============================================================
-# TEST WITH ONE PATIENT
-# ============================================================
-
 if __name__ == "__main__":
 
     print("=" * 80)
@@ -249,10 +219,6 @@ if __name__ == "__main__":
     print("  LOW")
     print("  MODERATE")
     print("  HIGH")
-
-    # --------------------------------------------------------
-    # Example patient
-    # --------------------------------------------------------
 
     example_patient = {
         "Age": 50,

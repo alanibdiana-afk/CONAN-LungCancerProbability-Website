@@ -41,19 +41,12 @@ type RiskLevel =
 
 type ModelFinding = {
   type?: string;
-
   label?: string;
-
   confidence?: number;
-
   attention_region?: string;
-
   attention_concentration?: number;
-
   attention_concentration_percent?: number;
-
   description?: string;
-
   clinical_interpretation?: string;
 };
 
@@ -61,19 +54,21 @@ type ModelFinding = {
 type Explainability = {
   method?: string;
 
+  /*
+   * IMPORTANT:
+   * heatmap is now primarily loaded from IndexedDB.
+   * This property remains for backward compatibility with
+   * older sessionStorage results.
+   */
   heatmap?: string;
 
   interpretation?: string;
-
   warning?: string;
 
   attention_region?: {
     region_name?: string;
-
     concentration?: number;
-
     centroid_x?: number;
-
     centroid_y?: number;
 
     bounding_box?: {
@@ -88,7 +83,6 @@ type Explainability = {
 
 type ExtendedPredictionResult =
   PredictionResult & {
-
     clinicalInput?: Record<string, unknown>;
 
     clinicalProbabilities?: {
@@ -119,7 +113,6 @@ type ExtendedPredictionResult =
     };
 
     finalProbability?: number;
-
     finalProbabilityPercent?: number;
 
     fileName?: string;
@@ -145,11 +138,8 @@ type ClinicalStoredResult = {
 
 type ImagingStoredResult = {
   probability?: number;
-
   probabilityPercent?: number;
-
   riskLevel?: RiskLevel;
-
   fileName?: string;
 
   thresholds?: {
@@ -176,13 +166,9 @@ type CombinedStoredResult = {
 
   imaging?: {
     probability?: number;
-
     riskLevel?: RiskLevel;
-
     modelFinding?: ModelFinding;
-
     explainability?: Explainability;
-
     fileName?: string;
   };
 
@@ -191,13 +177,16 @@ type CombinedStoredResult = {
 
 
 type FusionStoredResult = {
+  clinicalProbability?: number;
+  imagingProbability?: number;
+  combinedProbability?: number;
+  combinedProbabilityPercent?: number;
+
   clinical?: {
     low?: number;
     moderate?: number;
     high?: number;
   };
-
-  imagingProbability?: number;
 
   imagingRiskLevel?: RiskLevel;
 
@@ -216,14 +205,176 @@ type FusionStoredResult = {
   riskLevel?: RiskLevel;
 
   finalProbability?: number;
-
   finalProbabilityPercent?: number;
 
   weights?: {
     clinical?: number;
     imaging?: number;
   };
+
+  validationStatus?: string;
 };
+
+
+// ============================================================
+// INDEXEDDB GRAD-CAM STORAGE
+// ============================================================
+
+const GRADCAM_DB_NAME = "conan-storage";
+const GRADCAM_STORE_NAME = "imaging";
+const GRADCAM_KEY = "latest-gradcam";
+
+
+function openGradCamDatabase(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+
+    if (
+      typeof window === "undefined" ||
+      !("indexedDB" in window)
+    ) {
+      reject(
+        new Error(
+          "IndexedDB is not available."
+        )
+      );
+
+      return;
+    }
+
+    const request = window.indexedDB.open(
+      GRADCAM_DB_NAME,
+      1
+    );
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+
+      if (
+        !db.objectStoreNames.contains(
+          GRADCAM_STORE_NAME
+        )
+      ) {
+        db.createObjectStore(
+          GRADCAM_STORE_NAME
+        );
+      }
+    };
+
+    request.onsuccess = () => {
+      const db = request.result;
+
+      /*
+       * If the database already exists but the store was not
+       * created correctly, fail clearly instead of silently
+       * returning nothing.
+       */
+      if (
+        !db.objectStoreNames.contains(
+          GRADCAM_STORE_NAME
+        )
+      ) {
+        db.close();
+
+        reject(
+          new Error(
+            `IndexedDB store "${GRADCAM_STORE_NAME}" does not exist.`
+          )
+        );
+
+        return;
+      }
+
+      resolve(db);
+    };
+
+    request.onerror = () => {
+      reject(
+        request.error ||
+          new Error(
+            "Unable to open Grad-CAM storage."
+          )
+      );
+    };
+  });
+}
+
+
+function getStoredGradCam(): Promise<string | null> {
+  return new Promise(async (resolve, reject) => {
+
+    let db: IDBDatabase | null = null;
+
+    try {
+
+      db = await openGradCamDatabase();
+
+      const transaction = db.transaction(
+        GRADCAM_STORE_NAME,
+        "readonly"
+      );
+
+      const store = transaction.objectStore(
+        GRADCAM_STORE_NAME
+      );
+
+      const request = store.get(
+        GRADCAM_KEY
+      );
+
+      request.onsuccess = () => {
+
+        const value = request.result;
+
+        if (
+          typeof value === "string" &&
+          value.length > 0
+        ) {
+          resolve(value);
+        } else {
+          resolve(null);
+        }
+      };
+
+      request.onerror = () => {
+        reject(
+          request.error ||
+            new Error(
+              "Unable to retrieve Grad-CAM."
+            )
+        );
+      };
+
+      transaction.oncomplete = () => {
+        if (db) {
+          db.close();
+          db = null;
+        }
+      };
+
+      transaction.onerror = () => {
+        if (db) {
+          db.close();
+          db = null;
+        }
+      };
+
+      transaction.onabort = () => {
+        if (db) {
+          db.close();
+          db = null;
+        }
+      };
+
+    } catch (error) {
+
+      if (db) {
+        db.close();
+      }
+
+      reject(error);
+    }
+  });
+}
 
 
 // ============================================================
@@ -245,19 +396,14 @@ const riskConfig: Record<
   low: {
     gradient:
       "from-green-500 to-emerald-600",
-
     bg:
       "bg-green-50",
-
     border:
       "border-green-200",
-
     text:
       "text-green-700",
-
     icon:
       "✅",
-
     title:
       "Low Risk Detected",
   },
@@ -265,19 +411,14 @@ const riskConfig: Record<
   moderate: {
     gradient:
       "from-amber-500 to-orange-500",
-
     bg:
       "bg-amber-50",
-
     border:
       "border-amber-200",
-
     text:
       "text-amber-700",
-
     icon:
       "⚠️",
-
     title:
       "Moderate Risk Detected",
   },
@@ -285,19 +426,14 @@ const riskConfig: Record<
   high: {
     gradient:
       "from-red-500 to-rose-600",
-
     bg:
       "bg-red-50",
-
     border:
       "border-red-200",
-
     text:
       "text-red-700",
-
     icon:
       "🚨",
-
     title:
       "High Risk Detected",
   },
@@ -493,7 +629,7 @@ function factorInterpretation(
   impact:
     | "low"
     | "medium"
-    | "high",
+    | "high"
 ): string {
 
   if (
@@ -506,7 +642,6 @@ function factorInterpretation(
     );
   }
 
-
   if (
     impact ===
     "medium"
@@ -516,7 +651,6 @@ function factorInterpretation(
       "Your reported level was in an intermediate range on the CONAN input scale."
     );
   }
-
 
   return (
     "Your reported level was in a lower range on the CONAN input scale."
@@ -533,7 +667,7 @@ function getRiskGuidance(
   type:
     | "clinical"
     | "imaging"
-    | "combined",
+    | "combined"
 ) {
 
   if (
@@ -690,162 +824,318 @@ export default function ResultsContent() {
 
 
   // ==========================================================
+  // GRAD-CAM FROM INDEXEDDB
+  // ==========================================================
+
+  const [
+    gradCamHeatmap,
+    setGradCamHeatmap,
+  ] =
+    useState<
+      string |
+      null
+    >(null);
+
+
+  // ==========================================================
   // LOAD ALL RESULT DATA
   // ==========================================================
 
   useEffect(() => {
 
-    try {
-
-      // ------------------------------------------------------
-      // MAIN RESULT
-      // ------------------------------------------------------
-
-      const storedResult =
-        sessionStorage.getItem(
-          "conan_result",
-        );
+    let mounted =
+      true;
 
 
-      if (
-        storedResult
-      ) {
+    const loadResults =
+      async () => {
 
-        const parsed =
-          JSON.parse(
-            storedResult,
-          ) as ExtendedPredictionResult;
+        try {
+
+          // ----------------------------------------------------
+          // MAIN RESULT
+          // ----------------------------------------------------
+
+          const storedResult =
+            sessionStorage.getItem(
+              "conan_result",
+            );
 
 
-        if (
-          parsed.timestamp
+          let parsedResult:
+            ExtendedPredictionResult |
+            null =
+            null;
+
+
+          if (
+            storedResult
+          ) {
+
+            parsedResult =
+              JSON.parse(
+                storedResult,
+              ) as ExtendedPredictionResult;
+
+
+            if (
+              parsedResult.timestamp
+            ) {
+
+              parsedResult.timestamp =
+                new Date(
+                  parsedResult.timestamp,
+                );
+            }
+
+
+            if (
+              mounted
+            ) {
+
+              setResult(
+                parsedResult,
+              );
+            }
+          }
+
+
+          // ----------------------------------------------------
+          // CLINICAL
+          // ----------------------------------------------------
+
+          const clinical =
+            sessionStorage.getItem(
+              "conan_clinical_result",
+            );
+
+
+          let parsedClinical:
+            ClinicalStoredResult |
+            null =
+            null;
+
+
+          if (
+            clinical
+          ) {
+
+            parsedClinical =
+              JSON.parse(
+                clinical,
+              ) as ClinicalStoredResult;
+
+
+            if (
+              mounted
+            ) {
+
+              setClinicalStored(
+                parsedClinical,
+              );
+            }
+          }
+
+
+          // ----------------------------------------------------
+          // IMAGING
+          // ----------------------------------------------------
+
+          const imaging =
+            sessionStorage.getItem(
+              "conan_imaging_result",
+            );
+
+
+          let parsedImaging:
+            ImagingStoredResult |
+            null =
+            null;
+
+
+          if (
+            imaging
+          ) {
+
+            parsedImaging =
+              JSON.parse(
+                imaging,
+              ) as ImagingStoredResult;
+
+
+            if (
+              mounted
+            ) {
+
+              setImagingStored(
+                parsedImaging,
+              );
+            }
+          }
+
+
+          // ----------------------------------------------------
+          // FUSION
+          // ----------------------------------------------------
+
+          const fusion =
+            sessionStorage.getItem(
+              "conan_fusion_result",
+            );
+
+
+          let parsedFusion:
+            FusionStoredResult |
+            null =
+            null;
+
+
+          if (
+            fusion
+          ) {
+
+            parsedFusion =
+              JSON.parse(
+                fusion,
+              ) as FusionStoredResult;
+
+
+            if (
+              mounted
+            ) {
+
+              setFusionStored(
+                parsedFusion,
+              );
+            }
+          }
+
+
+          // ----------------------------------------------------
+          // COMBINED
+          // ----------------------------------------------------
+
+          const combined =
+            sessionStorage.getItem(
+              "conan_combined_result",
+            );
+
+
+          let parsedCombined:
+            CombinedStoredResult |
+            null =
+            null;
+
+
+          if (
+            combined
+          ) {
+
+            parsedCombined =
+              JSON.parse(
+                combined,
+              ) as CombinedStoredResult;
+
+
+            if (
+              mounted
+            ) {
+
+              setCombinedStored(
+                parsedCombined,
+              );
+            }
+          }
+
+
+          // ----------------------------------------------------
+          // GRAD-CAM FALLBACK FROM OLD SESSION STORAGE
+          // ----------------------------------------------------
+          //
+          // This is important for results generated BEFORE the
+          // IndexedDB storage change.
+          //
+          // ----------------------------------------------------
+
+          const fallbackHeatmap =
+            parsedImaging?.explainability?.heatmap ??
+            parsedCombined?.imaging?.explainability?.heatmap ??
+            parsedResult?.explainability?.heatmap ??
+            null;
+
+
+          if (
+            mounted &&
+            fallbackHeatmap
+          ) {
+
+            setGradCamHeatmap(
+              fallbackHeatmap,
+            );
+          }
+
+
+          // ----------------------------------------------------
+          // GRAD-CAM FROM INDEXEDDB
+          // ----------------------------------------------------
+          //
+          // This is the PRIMARY source for new results.
+          //
+          // ----------------------------------------------------
+
+          try {
+
+            const storedHeatmap =
+              await getStoredGradCam();
+
+
+            if (
+              mounted &&
+              storedHeatmap
+            ) {
+
+              setGradCamHeatmap(
+                storedHeatmap,
+              );
+            }
+
+          } catch (
+            gradCamError
+          ) {
+
+            console.warn(
+              "[CONAN Results] Could not load Grad-CAM from IndexedDB:",
+              gradCamError,
+            );
+          }
+
+        } catch (
+          error
         ) {
 
-          parsed.timestamp =
-            new Date(
-              parsed.timestamp,
-            );
+          console.error(
+            "[CONAN Results] Failed to load result:",
+            error,
+          );
         }
+      };
 
 
-        setResult(
-          parsed,
-        );
-      }
+    void loadResults();
 
 
-      // ------------------------------------------------------
-      // CLINICAL
-      // ------------------------------------------------------
+    return () => {
 
-      const clinical =
-        sessionStorage.getItem(
-          "conan_clinical_result",
-        );
-
-
-      if (
-        clinical
-      ) {
-
-        setClinicalStored(
-          JSON.parse(
-            clinical,
-          ) as ClinicalStoredResult,
-        );
-      }
-
-
-      // ------------------------------------------------------
-      // IMAGING
-      // ------------------------------------------------------
-
-      const imaging =
-        sessionStorage.getItem(
-          "conan_imaging_result",
-        );
-
-
-      if (
-        imaging
-      ) {
-
-        setImagingStored(
-          JSON.parse(
-            imaging,
-          ) as ImagingStoredResult,
-        );
-      }
-
-
-      // ------------------------------------------------------
-      // FUSION
-      // ------------------------------------------------------
-
-      const fusion =
-        sessionStorage.getItem(
-          "conan_fusion_result",
-        );
-
-
-      if (
-        fusion
-      ) {
-
-        setFusionStored(
-          JSON.parse(
-            fusion,
-          ) as FusionStoredResult,
-        );
-      }
-
-
-      // ------------------------------------------------------
-      // COMBINED
-      // ------------------------------------------------------
-      //
-      // IMPORTANT:
-      // Combined stores its own COMPLETE imaging object.
-      //
-      // We load this separately so Combined uses exactly
-      // the same modelFinding and Grad-CAM output as the
-      // individual Imaging assessment.
-      //
-      // ------------------------------------------------------
-
-      const combined =
-        sessionStorage.getItem(
-          "conan_combined_result",
-        );
-
-
-      if (
-        combined
-      ) {
-
-        setCombinedStored(
-          JSON.parse(
-            combined,
-          ) as CombinedStoredResult,
-        );
-      }
-
-    } catch (
-      error
-    ) {
-
-      console.error(
-        "[CONAN Results] Failed to load result:",
-        error,
-      );
-    }
+      mounted =
+        false;
+    };
 
   }, []);
 
 
-  // ==========================================================
+  // ============================================================
   // NO RESULT
-  // ==========================================================
+  // ============================================================
 
   if (
     !result
@@ -892,9 +1182,9 @@ export default function ResultsContent() {
   }
 
 
-  // ==========================================================
+  // ============================================================
   // RESULT TYPE
-  // ==========================================================
+  // ============================================================
 
   const isClinical =
     result.type ===
@@ -940,9 +1230,9 @@ export default function ResultsContent() {
     );
 
 
-  // ==========================================================
+  // ============================================================
   // CLINICAL DATA
-  // ==========================================================
+  // ============================================================
 
   const clinicalPatient =
     result.clinicalInput ??
@@ -950,19 +1240,9 @@ export default function ResultsContent() {
     null;
 
 
-  // ==========================================================
+  // ============================================================
   // COMBINED IMAGING SOURCE
-  // ==========================================================
-  //
-  // PRIORITY:
-  //
-  // 1. Combined's own stored imaging object
-  // 2. Main result object
-  // 3. Individual imaging storage
-  // 4. Fusion storage
-  //
-  // This makes Combined consistent with Model 2.
-  // ==========================================================
+  // ============================================================
 
   const combinedImaging =
     isCombined
@@ -970,9 +1250,9 @@ export default function ResultsContent() {
       : undefined;
 
 
-  // ==========================================================
+  // ============================================================
   // IMAGING PROBABILITY
-  // ==========================================================
+  // ============================================================
 
   const imagingProbability =
     combinedImaging?.probability ??
@@ -981,9 +1261,9 @@ export default function ResultsContent() {
     fusionStored?.imagingProbability;
 
 
-  // ==========================================================
+  // ============================================================
   // IMAGING RISK
-  // ==========================================================
+  // ============================================================
 
   const imagingRiskLevel =
     combinedImaging?.riskLevel ??
@@ -992,13 +1272,9 @@ export default function ResultsContent() {
     fusionStored?.imagingRiskLevel;
 
 
-  // ==========================================================
+  // ============================================================
   // MODEL FINDING
-  // ==========================================================
-  //
-  // Combined now receives EXACTLY the same model finding
-  // as Individual Imaging.
-  // ==========================================================
+  // ============================================================
 
   const imagingFinding =
     combinedImaging?.modelFinding ??
@@ -1006,9 +1282,9 @@ export default function ResultsContent() {
     imagingStored?.modelFinding;
 
 
-  // ==========================================================
-  // GRAD-CAM
-  // ==========================================================
+  // ============================================================
+  // EXPLAINABILITY METADATA
+  // ============================================================
 
   const explainability =
     combinedImaging?.explainability ??
@@ -1016,9 +1292,27 @@ export default function ResultsContent() {
     imagingStored?.explainability;
 
 
-  // ==========================================================
+  // ============================================================
+  // GRAD-CAM DISPLAY SOURCE
+  // ============================================================
+  //
+  // New results:
+  //     IndexedDB
+  //
+  // Older results:
+  //     sessionStorage heatmap
+  //
+  // ============================================================
+
+  const displayHeatmap =
+    gradCamHeatmap ??
+    explainability?.heatmap ??
+    null;
+
+
+  // ============================================================
   // CLINICAL FACTORS
-  // ==========================================================
+  // ============================================================
 
   const presentFactors =
     result.factors.filter(
@@ -1034,9 +1328,9 @@ export default function ResultsContent() {
     );
 
 
-  // ==========================================================
+  // ============================================================
   // TIMESTAMP
-  // ==========================================================
+  // ============================================================
 
   const timestamp =
     result.timestamp instanceof
@@ -1049,14 +1343,13 @@ export default function ResultsContent() {
         );
 
 
-  // ==========================================================
+  // ============================================================
   // PAGE
-  // ==========================================================
+  // ============================================================
 
   return (
 
     <div className="space-y-6 animate-fadeIn">
-
 
       {/* ======================================================
           NAVIGATION
@@ -1896,7 +2189,7 @@ export default function ResultsContent() {
               GRAD-CAM
               ================================================== */}
 
-          {explainability?.heatmap && (
+          {displayHeatmap ? (
 
             <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
 
@@ -1917,7 +2210,7 @@ export default function ResultsContent() {
                   <p className="text-xs text-purple-600">
 
                     {
-                      explainability.method ||
+                      explainability?.method ||
                       "Grad-CAM"
                     }
 
@@ -1932,7 +2225,7 @@ export default function ResultsContent() {
 
                 <img
                   src={
-                    explainability.heatmap
+                    displayHeatmap
                   }
                   alt="Grad-CAM visual explanation of the chest X-ray prediction"
                   className="w-full object-contain"
@@ -1944,7 +2237,7 @@ export default function ResultsContent() {
               <p className="text-xs text-slate-600 leading-relaxed mt-3">
 
                 {
-                  explainability.interpretation ||
+                  explainability?.interpretation ||
                   "Highlighted regions indicate areas that contributed more strongly to the model prediction."
                 }
 
@@ -1961,12 +2254,48 @@ export default function ResultsContent() {
 
                   </strong>{" "}
 
-                  {explainability.warning ||
+                  {explainability?.warning ||
                     "The highlighted regions represent model attention. They do not independently confirm a nodule, mass, opacity, lesion, or cancerous abnormality."}
 
                 </p>
 
               </div>
+
+            </div>
+
+          ) : (
+
+            <div className="mt-4 rounded-xl border border-purple-200 bg-purple-50 p-4">
+
+              <div className="flex items-center gap-2">
+
+                <ScanLine className="w-5 h-5 text-purple-700" />
+
+                <div>
+
+                  <p className="text-sm font-semibold text-purple-800">
+
+                    Visual Model Explanation
+
+                  </p>
+
+                  <p className="text-xs text-purple-600">
+
+                    Grad-CAM visualization unavailable
+
+                  </p>
+
+                </div>
+
+              </div>
+
+              <p className="text-xs text-slate-600 leading-relaxed mt-3">
+
+                The imaging prediction was generated successfully,
+                but the Grad-CAM visualization could not be retrieved
+                from browser storage.
+
+              </p>
 
             </div>
 
@@ -2009,10 +2338,6 @@ export default function ResultsContent() {
 
           </div>
 
-
-          {/* ==================================================
-              FUSION SUMMARY
-              ================================================== */}
 
           <div className="rounded-xl border border-teal-200 bg-teal-50 p-4">
 
@@ -2135,9 +2460,6 @@ export default function ResultsContent() {
 
         <div className="space-y-4">
 
-
-          {/* PRIMARY */}
-
           <div
             className={cn(
               "rounded-xl border p-4",
@@ -2168,8 +2490,6 @@ export default function ResultsContent() {
 
           </div>
 
-
-          {/* FOLLOW-UP */}
 
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
 
@@ -2222,8 +2542,6 @@ export default function ResultsContent() {
 
           </div>
 
-
-          {/* HIGH */}
 
           {result.riskLevel ===
             "high" && (
@@ -2305,8 +2623,6 @@ export default function ResultsContent() {
           )}
 
 
-          {/* MODERATE */}
-
           {result.riskLevel ===
             "moderate" && (
 
@@ -2338,8 +2654,6 @@ export default function ResultsContent() {
 
           )}
 
-
-          {/* HEALTHY LUNG */}
 
           <div className="rounded-xl border border-green-200 bg-green-50 p-4">
 
@@ -2377,8 +2691,6 @@ export default function ResultsContent() {
           </div>
 
 
-          {/* SMOKING */}
-
           <div className="rounded-xl border border-orange-200 bg-orange-50 p-4">
 
             <div className="flex items-center gap-2 mb-2">
@@ -2405,8 +2717,6 @@ export default function ResultsContent() {
 
           </div>
 
-
-          {/* EARLY DETECTION */}
 
           <div className="rounded-xl border border-purple-200 bg-purple-50 p-4">
 
@@ -2455,6 +2765,7 @@ export default function ResultsContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 
           {[
+
             {
               name:
                 "World Health Organization",

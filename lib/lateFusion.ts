@@ -5,41 +5,22 @@
 // MODEL 3 — COMBINED MULTIMODAL RISK MODEL
 //
 // Clinical model:
-//   P_LOW
-//   P_MODERATE
-//   P_HIGH
+//   Continuous clinical risk probability
 //
 // Imaging model:
-//   Continuous P_IMAGING in [0, 1]
+//   Continuous imaging risk probability from ResNet-50
 //
-// Current fusion status:
-//   EQUAL-WEIGHT BASELINE
+// Fusion:
+//   P_COMBINED = wC * P_CLINICAL + wI * P_IMAGING
 //
+// Current baseline:
 //   Clinical = 50%
 //   Imaging  = 50%
 //
 // IMPORTANT:
-// These weights are NOT claimed to be empirically validated.
-// They are the neutral baseline used until paired multimodal
-// validation data is available.
-//
-// Imaging is represented continuously as:
-//
-//   LOW      = 1 - P_IMAGING
-//   MODERATE = 0
-//   HIGH     = P_IMAGING
-//
-// Final:
-//
-//   P_F_LOW      = wC * P_C_LOW
-//                + wI * (1 - P_I)
-//
-//   P_F_MODERATE = wC * P_C_MODERATE
-//
-//   P_F_HIGH     = wC * P_C_HIGH
-//                + wI * P_I
-//
-// Final risk = ARGMAX(P_F_LOW, P_F_MODERATE, P_F_HIGH)
+//   The equal weights are a baseline and are not claimed to be
+//   empirically optimized until paired multimodal validation
+//   data are available.
 //
 // ============================================================
 
@@ -50,28 +31,21 @@ export type RiskLevel =
   | "high";
 
 
-export interface ClinicalProbabilities {
-  low: number;
-  moderate: number;
-  high: number;
-}
-
+// ============================================================
+// RESULT INTERFACE
+// ============================================================
 
 export interface LateFusionResult {
 
-  clinical: ClinicalProbabilities;
+  clinicalProbability: number;
 
   imagingProbability: number;
 
+  combinedProbability: number;
+
+  combinedProbabilityPercent: number;
+
   imagingRiskLevel: RiskLevel;
-
-  imagingDistribution: ClinicalProbabilities;
-
-  final: ClinicalProbabilities;
-
-  finalProbability: number;
-
-  finalProbabilityPercent: number;
 
   riskLevel: RiskLevel;
 
@@ -85,24 +59,7 @@ export interface LateFusionResult {
 
 
 // ============================================================
-// IMAGING CATEGORY THRESHOLDS
-// ============================================================
-//
-// These thresholds are for the displayed imaging risk category.
-//
-// LOW:
-//     probability < 0.05
-//
-// MODERATE:
-//     0.05 <= probability <= 0.65
-//
-// HIGH:
-//     probability > 0.65
-//
-// IMPORTANT:
-// The thresholds do NOT replace the continuous imaging
-// probability during fusion.
-//
+// RISK THRESHOLDS
 // ============================================================
 
 export const LOW_THRESHOLD = 0.05;
@@ -114,16 +71,14 @@ export const HIGH_THRESHOLD = 0.65;
 // FUSION WEIGHTS
 // ============================================================
 //
-// Current status:
+// Current baseline:
 //
-//   50% Clinical
-//   50% Imaging
+//   Clinical = 50%
+//   Imaging  = 50%
 //
-// This is an equal-weight baseline.
-//
-// Do NOT describe this as "validated" until the weights have
-// been optimized on a paired multimodal validation dataset.
-//
+// These weights should not be described as empirically
+// optimized until they are learned/validated using paired
+// multimodal validation data.
 // ============================================================
 
 export const CLINICAL_WEIGHT = 0.50;
@@ -140,9 +95,7 @@ function validateProbability(
   name: string,
 ): number {
 
-  const number =
-    Number(value);
-
+  const number = Number(value);
 
   if (
     !Number.isFinite(number) ||
@@ -155,69 +108,7 @@ function validateProbability(
     );
   }
 
-
   return number;
-}
-
-
-// ============================================================
-// NORMALIZE CLINICAL PROBABILITIES
-// ============================================================
-
-function normalizeClinical(
-  clinical: ClinicalProbabilities,
-): ClinicalProbabilities {
-
-  const low =
-    validateProbability(
-      clinical.low,
-      "Clinical LOW probability",
-    );
-
-
-  const moderate =
-    validateProbability(
-      clinical.moderate,
-      "Clinical MODERATE probability",
-    );
-
-
-  const high =
-    validateProbability(
-      clinical.high,
-      "Clinical HIGH probability",
-    );
-
-
-  const total =
-    low +
-    moderate +
-    high;
-
-
-  if (
-    !Number.isFinite(total) ||
-    total <= 0
-  ) {
-
-    throw new Error(
-      "Clinical probabilities must have a positive total.",
-    );
-  }
-
-
-  return {
-
-    low:
-      low / total,
-
-    moderate:
-      moderate / total,
-
-    high:
-      high / total,
-
-  };
 }
 
 
@@ -231,21 +122,15 @@ function validateFusionWeights(): void {
     CLINICAL_WEIGHT +
     IMAGING_WEIGHT;
 
-
   if (
-    !Number.isFinite(
-      CLINICAL_WEIGHT,
-    ) ||
-    !Number.isFinite(
-      IMAGING_WEIGHT,
-    )
+    !Number.isFinite(CLINICAL_WEIGHT) ||
+    !Number.isFinite(IMAGING_WEIGHT)
   ) {
 
     throw new Error(
       "Fusion weights must be finite numbers.",
     );
   }
-
 
   if (
     CLINICAL_WEIGHT < 0 ||
@@ -257,12 +142,8 @@ function validateFusionWeights(): void {
     );
   }
 
-
   if (
-    Math.abs(
-      total - 1,
-    ) >
-    1e-12
+    Math.abs(total - 1) > 1e-12
   ) {
 
     throw new Error(
@@ -273,124 +154,95 @@ function validateFusionWeights(): void {
 
 
 // ============================================================
-// CLASSIFY IMAGING RISK
-// ============================================================
-//
-// This classification is kept for the UI and result display.
-//
-// It does NOT convert the continuous imaging probability into
-// a one-hot vector for fusion.
-//
+// CLASSIFY RISK
 // ============================================================
 
-export function classifyImagingRisk(
+export function classifyRisk(
   probability: number,
 ): RiskLevel {
 
-  const imaging =
+  const p =
     validateProbability(
       probability,
-      "Imaging probability",
+      "Risk probability",
     );
 
-
   if (
-    imaging <
-    LOW_THRESHOLD
+    p < LOW_THRESHOLD
   ) {
 
     return "low";
   }
 
-
   if (
-    imaging <=
-    HIGH_THRESHOLD
+    p <= HIGH_THRESHOLD
   ) {
 
     return "moderate";
   }
-
 
   return "high";
 }
 
 
 // ============================================================
-// CONVERT CONTINUOUS IMAGING PROBABILITY
-// ============================================================
-//
-// The imaging model is binary and produces:
-//
-//     P_IMAGING
-//
-// We therefore preserve that continuous probability rather than
-// throwing it away through threshold-based one-hot encoding.
-//
-// Representation:
-//
-//     LOW      = 1 - P_IMAGING
-//     MODERATE = 0
-//     HIGH     = P_IMAGING
-//
-// This distribution always sums to 1.
-//
+// CLASSIFY IMAGING RISK
 // ============================================================
 
-export function imagingProbabilityToDistribution(
+export function classifyImagingRisk(
   probability: number,
-): ClinicalProbabilities {
+): RiskLevel {
 
-  const imaging =
-    validateProbability(
-      probability,
-      "Imaging probability",
-    );
-
-
-  return {
-
-    low:
-      1 - imaging,
-
-    moderate:
-      0,
-
-    high:
-      imaging,
-
-  };
+  return classifyRisk(
+    probability,
+  );
 }
 
 
 // ============================================================
-// FUSE CLINICAL + IMAGING
+// CONTINUOUS LATE FUSION
+// ============================================================
+//
+// The two models produce continuous probabilities:
+//
+//   P_CLINICAL
+//   P_IMAGING
+//
+// These are combined directly:
+//
+//   P_COMBINED
+//      = wC(P_CLINICAL)
+//      + wI(P_IMAGING)
+//
+// No artificial LOW/MODERATE/HIGH distribution is created
+// from the CNN probability.
 // ============================================================
 
 export function fuseClinicalAndImaging(
-  clinical: ClinicalProbabilities,
+  clinicalProbability: number,
   imagingProbability: number,
 ): LateFusionResult {
 
   // ----------------------------------------------------------
-  // Validate configured fusion weights
+  // Validate weights
   // ----------------------------------------------------------
 
   validateFusionWeights();
 
 
   // ----------------------------------------------------------
-  // MODEL 1 — Clinical
+  // Validate clinical probability
   // ----------------------------------------------------------
 
-  const normalizedClinical =
-    normalizeClinical(
-      clinical,
+  const clinical =
+    validateProbability(
+      clinicalProbability,
+      "Clinical probability",
     );
 
 
   // ----------------------------------------------------------
-  // MODEL 2 — Imaging
+  // Validate imaging probability
   // ----------------------------------------------------------
 
   const imaging =
@@ -401,7 +253,7 @@ export function fuseClinicalAndImaging(
 
 
   // ----------------------------------------------------------
-  // Imaging category
+  // Imaging risk category
   // ----------------------------------------------------------
 
   const imagingRiskLevel =
@@ -410,160 +262,57 @@ export function fuseClinicalAndImaging(
     );
 
 
-  // ----------------------------------------------------------
-  // Continuous imaging representation
-  // ----------------------------------------------------------
-
-  const imagingDistribution =
-    imagingProbabilityToDistribution(
-      imaging,
-    );
-
-
   // ==========================================================
-  // MODEL 3 — LATE FUSION
+  // MODEL 3 — CONTINUOUS LATE FUSION
   // ==========================================================
 
-  const finalLow =
+  const combinedProbability =
     (
       CLINICAL_WEIGHT *
-      normalizedClinical.low
+      clinical
     )
     +
     (
       IMAGING_WEIGHT *
-      imagingDistribution.low
-    );
-
-
-  const finalModerate =
-    (
-      CLINICAL_WEIGHT *
-      normalizedClinical.moderate
-    )
-    +
-    (
-      IMAGING_WEIGHT *
-      imagingDistribution.moderate
-    );
-
-
-  const finalHigh =
-    (
-      CLINICAL_WEIGHT *
-      normalizedClinical.high
-    )
-    +
-    (
-      IMAGING_WEIGHT *
-      imagingDistribution.high
+      imaging
     );
 
 
   // ----------------------------------------------------------
-  // Validate fused distribution
+  // Protect against floating-point drift
   // ----------------------------------------------------------
-
-  const total =
-    finalLow +
-    finalModerate +
-    finalHigh;
-
-
-  if (
-    !Number.isFinite(total) ||
-    total <= 0
-  ) {
-
-    throw new Error(
-      "Fusion produced an invalid probability distribution.",
-    );
-  }
-
-
-  // ----------------------------------------------------------
-  // Normalize final distribution
-  // ----------------------------------------------------------
-
-  const final: ClinicalProbabilities = {
-
-    low:
-      finalLow / total,
-
-    moderate:
-      finalModerate / total,
-
-    high:
-      finalHigh / total,
-
-  };
-
-
-  // ----------------------------------------------------------
-  // Final distribution validation
-  // ----------------------------------------------------------
-
-  const finalTotal =
-    final.low +
-    final.moderate +
-    final.high;
-
-
-  if (
-    !Number.isFinite(finalTotal) ||
-    Math.abs(
-      finalTotal - 1,
-    ) >
-    1e-6
-  ) {
-
-    throw new Error(
-      "Final fusion probabilities must sum to 1.",
-    );
-  }
-
-
-  // ==========================================================
-  // SELECT FINAL RISK CATEGORY
-  // ==========================================================
-
-  let riskLevel: RiskLevel;
-
-
-  if (
-    final.high >= final.moderate &&
-    final.high >= final.low
-  ) {
-
-    riskLevel =
-      "high";
-
-  }
-  else if (
-    final.moderate >= final.low
-  ) {
-
-    riskLevel =
-      "moderate";
-
-  }
-  else {
-
-    riskLevel =
-      "low";
-  }
-
-
-  // ==========================================================
-  // PROBABILITY OF SELECTED CATEGORY
-  // ==========================================================
 
   const finalProbability =
-    riskLevel === "high"
-      ? final.high
-      : riskLevel === "moderate"
-        ? final.moderate
-        : final.low;
+    Math.max(
+      0,
+      Math.min(
+        1,
+        combinedProbability,
+      ),
+    );
+
+
+  // ----------------------------------------------------------
+  // Final combined risk category
+  // ----------------------------------------------------------
+
+  const riskLevel =
+    classifyRisk(
+      finalProbability,
+    );
+
+
+  // ----------------------------------------------------------
+  // Percentage
+  // ----------------------------------------------------------
+
+  const combinedProbabilityPercent =
+    Number(
+      (
+        finalProbability *
+        100
+      ).toFixed(2),
+    );
 
 
   // ==========================================================
@@ -572,29 +321,23 @@ export function fuseClinicalAndImaging(
 
   return {
 
-    clinical:
-      normalizedClinical,
+    clinicalProbability:
+      clinical,
 
     imagingProbability:
       imaging,
 
-    imagingRiskLevel,
+    combinedProbability:
+      finalProbability,
 
-    imagingDistribution,
+    combinedProbabilityPercent:
+      combinedProbabilityPercent,
 
-    final,
+    imagingRiskLevel:
+      imagingRiskLevel,
 
-    finalProbability,
-
-    finalProbabilityPercent:
-      Number(
-        (
-          finalProbability *
-          100
-        ).toFixed(2),
-      ),
-
-    riskLevel,
+    riskLevel:
+      riskLevel,
 
     weights: {
 
@@ -603,11 +346,9 @@ export function fuseClinicalAndImaging(
 
       imaging:
         IMAGING_WEIGHT,
-
     },
 
     validationStatus:
-      "Equal-weight baseline; fusion weights are not empirically validated on paired multimodal validation data.",
-
+      "Equal-weight continuous late-fusion baseline; fusion weights are not empirically optimized on paired multimodal validation data.",
   };
 }

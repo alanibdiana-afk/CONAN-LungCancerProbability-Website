@@ -12,11 +12,6 @@ from torchvision import models, transforms
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
-
-# ============================================================
-# CONAN CHEST X-RAY IMAGING RISK API
-# ============================================================
-
 BASE_DIR = Path(__file__).resolve().parent
 
 MODEL_PATH = (
@@ -35,11 +30,6 @@ STD = [0.229, 0.224, 0.225]
 LOW_THRESHOLD = 0.05
 HIGH_THRESHOLD = 0.65
 
-
-# ============================================================
-# RISK CLASSIFICATION
-# ============================================================
-
 def probability_to_risk(
     probability: float,
 ) -> str:
@@ -51,11 +41,6 @@ def probability_to_risk(
         return "moderate"
 
     return "high"
-
-
-# ============================================================
-# MODEL
-# ============================================================
 
 def create_model():
 
@@ -77,22 +62,12 @@ def create_model():
 
     return model
 
-
-# ============================================================
-# VERIFY CHECKPOINT
-# ============================================================
-
 if not MODEL_PATH.exists():
 
     raise FileNotFoundError(
         "Trained imaging model not found.\n"
         f"Expected location:\n{MODEL_PATH}"
     )
-
-
-# ============================================================
-# LOAD CHECKPOINT
-# ============================================================
 
 checkpoint = torch.load(
     MODEL_PATH,
@@ -112,11 +87,6 @@ model = model.to(
 
 model.eval()
 
-
-# ============================================================
-# TRANSFORM
-# ============================================================
-
 transform = transforms.Compose(
     [
         transforms.Resize(
@@ -133,10 +103,6 @@ transform = transforms.Compose(
     ]
 )
 
-
-# ============================================================
-# GRAD-CAM
-# ============================================================
 
 class GradCAM:
 
@@ -281,11 +247,6 @@ class GradCAM:
 
         self.backward_handle.remove()
 
-
-# ============================================================
-# DETERMINE ATTENTION REGION
-# ============================================================
-
 def determine_attention_region(
     cam,
 ):
@@ -356,11 +317,6 @@ def determine_attention_region(
         cam_max - cam_min
     )
 
-
-    # --------------------------------------------------------
-    # Keep the stronger activation areas.
-    # --------------------------------------------------------
-
     threshold = float(
         np.percentile(
             cam,
@@ -398,10 +354,6 @@ def determine_attention_region(
                 None,
         }
 
-
-    # --------------------------------------------------------
-    # Weighted centroid.
-    # --------------------------------------------------------
 
     weights = cam[
         mask
@@ -467,10 +419,6 @@ def determine_attention_region(
     )
 
 
-    # --------------------------------------------------------
-    # Horizontal location.
-    # --------------------------------------------------------
-
     if normalized_x < 0.33:
 
         horizontal = "left"
@@ -484,10 +432,6 @@ def determine_attention_region(
         horizontal = "central"
 
 
-    # --------------------------------------------------------
-    # Vertical location.
-    # --------------------------------------------------------
-
     if normalized_y < 0.33:
 
         vertical = "upper"
@@ -500,10 +444,6 @@ def determine_attention_region(
 
         vertical = "middle"
 
-
-    # --------------------------------------------------------
-    # Human-readable image region.
-    # --------------------------------------------------------
 
     if horizontal == "central":
 

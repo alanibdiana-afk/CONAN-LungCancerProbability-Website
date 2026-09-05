@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { useApp } from "@/lib/context";
 import type { PredictionResult } from "@/lib/types";
 
@@ -21,7 +20,6 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-
 
 // ============================================================
 // TYPES
@@ -62,22 +60,16 @@ type ClinicalFeature =
   | "Clubbing of Finger Nails"
   | "Dry Cough";
 
-
 type ClinicalPatient = Record<
   ClinicalFeature,
   number
 >;
 
-
 type ClinicalRiskResult = {
   success: boolean;
-
   model?: string;
-
   risk: ClinicalRisk;
-
   probability: number;
-
   probabilities?: {
     low?: number;
     moderate?: number;
@@ -85,24 +77,15 @@ type ClinicalRiskResult = {
   };
 };
 
-
 type ImagingApiResponse = {
   success?: boolean;
-
   input_valid?: boolean;
-
   error?: string;
-
   detail?: string;
-
   message?: string;
-
   error_type?: string;
-
   probability?: number;
-
   probability_percent?: number;
-
   risk_level?: RiskLevel;
 
   model_finding?: {
@@ -121,37 +104,23 @@ type ImagingApiResponse = {
   };
 };
 
+// ============================================================
+// UPDATED FUSION RESPONSE
+// ============================================================
 
 type FusionResponse = {
   success?: boolean;
-
   model?: string;
 
-  clinical?: {
-    low?: number;
-    moderate?: number;
-    high?: number;
-  };
+  clinicalProbability?: number;
 
   imagingProbability?: number;
 
+  combinedProbability?: number;
+
+  combinedProbabilityPercent?: number;
+
   imagingRiskLevel?: RiskLevel;
-
-  imagingDistribution?: {
-    low?: number;
-    moderate?: number;
-    high?: number;
-  };
-
-  final?: {
-    low?: number;
-    moderate?: number;
-    high?: number;
-  };
-
-  finalProbability?: number;
-
-  finalProbabilityPercent?: number;
 
   riskLevel?: RiskLevel;
 
@@ -160,9 +129,10 @@ type FusionResponse = {
     imaging?: number;
   };
 
+  validationStatus?: string;
+
   error?: string;
 };
-
 
 // ============================================================
 // FIELD CONFIGURATION
@@ -170,21 +140,14 @@ type FusionResponse = {
 
 type FieldConfig = {
   feature: ClinicalFeature;
-
   label: string;
-
   description: string;
-
   min: number;
-
   max: number;
-
   category: string;
 };
 
-
 const FIELD_CONFIG: FieldConfig[] = [
-
   // ----------------------------------------------------------
   // PERSONAL
   // ----------------------------------------------------------
@@ -210,7 +173,6 @@ const FIELD_CONFIG: FieldConfig[] = [
     category:
       "Personal Information",
   },
-
 
   // ----------------------------------------------------------
   // ENVIRONMENTAL / GENETIC
@@ -282,7 +244,6 @@ const FIELD_CONFIG: FieldConfig[] = [
       "Environmental & Genetic Factors",
   },
 
-
   // ----------------------------------------------------------
   // LIFESTYLE
   // ----------------------------------------------------------
@@ -352,7 +313,6 @@ const FIELD_CONFIG: FieldConfig[] = [
     category:
       "Lifestyle & Body Factors",
   },
-
 
   // ----------------------------------------------------------
   // CLINICAL SYMPTOMS
@@ -458,7 +418,6 @@ const FIELD_CONFIG: FieldConfig[] = [
   },
 ];
 
-
 // ============================================================
 // CATEGORIES
 // ============================================================
@@ -470,59 +429,35 @@ const CATEGORIES = [
   "Clinical Symptoms",
 ];
 
-
 // ============================================================
 // DEFAULT CLINICAL VALUES
 // ============================================================
 
 const DEFAULT_VALUES: ClinicalPatient = {
   Age: 25,
-
   Gender: 1,
-
   "Air Pollution": 1,
-
   "Alcohol use": 1,
-
   "Dust Allergy": 1,
-
   "OccuPational Hazards": 1,
-
   "Genetic Risk": 1,
-
   "chronic Lung Disease": 1,
-
   "Balanced Diet": 1,
-
   Obesity: 1,
-
   Smoking: 1,
-
   "Passive Smoker": 1,
-
   "Frequent Cold": 1,
-
   Snoring: 1,
-
   "Chest Pain": 1,
-
   "Coughing of Blood": 1,
-
   Fatigue: 1,
-
   "Weight Loss": 1,
-
   "Shortness of Breath": 1,
-
   Wheezing: 1,
-
   "Swallowing Difficulty": 1,
-
   "Clubbing of Finger Nails": 1,
-
   "Dry Cough": 1,
 };
-
 
 // ============================================================
 // HELPERS
@@ -531,9 +466,7 @@ const DEFAULT_VALUES: ClinicalPatient = {
 function convertRiskLevel(
   risk: ClinicalRisk,
 ): RiskLevel {
-
   switch (risk) {
-
     case "LOW":
       return "low";
 
@@ -545,7 +478,6 @@ function convertRiskLevel(
   }
 }
 
-
 // ============================================================
 // BUILD CLINICAL FACTORS
 // ============================================================
@@ -553,7 +485,6 @@ function convertRiskLevel(
 function buildClinicalFactors(
   patient: ClinicalPatient,
 ): PredictionResult["factors"] {
-
   return FIELD_CONFIG
     .filter(
       field =>
@@ -561,12 +492,10 @@ function buildClinicalFactors(
         "Personal Information",
     )
     .map(field => {
-
       const value =
         patient[
           field.feature
         ];
-
 
       const normalized =
         (
@@ -578,40 +507,28 @@ function buildClinicalFactors(
           field.min
         );
 
-
       let impact:
         "low" |
         "medium" |
         "high";
 
-
       if (
         normalized >=
         0.67
       ) {
-
-        impact =
-          "high";
-
+        impact = "high";
       }
       else if (
         normalized >=
         0.34
       ) {
-
-        impact =
-          "medium";
-
+        impact = "medium";
       }
       else {
-
-        impact =
-          "low";
+        impact = "low";
       }
 
-
       return {
-
         name:
           field.label,
 
@@ -620,9 +537,7 @@ function buildClinicalFactors(
         present:
           normalized >=
           0.34,
-
       };
-
     })
     .filter(
       factor =>
@@ -630,13 +545,11 @@ function buildClinicalFactors(
     )
     .sort(
       (a, b) => {
-
         const order = {
           high: 0,
           medium: 1,
           low: 2,
         };
-
 
         return (
           order[a.impact] -
@@ -646,7 +559,6 @@ function buildClinicalFactors(
     );
 }
 
-
 // ============================================================
 // API JSON HELPER
 // ============================================================
@@ -654,27 +566,21 @@ function buildClinicalFactors(
 async function readJson<T>(
   response: Response,
 ): Promise<T> {
-
   const text =
     await response.text();
 
-
   try {
-
     return JSON.parse(
       text,
     ) as T;
-
   }
   catch {
-
     throw new Error(
       text ||
         `Request failed with HTTP ${response.status}.`,
     );
   }
 }
-
 
 // ============================================================
 // COMPONENT
@@ -685,13 +591,11 @@ export default function CombinedForm() {
   const router =
     useRouter();
 
-
   const {
     saveResult,
     user,
   } =
     useApp();
-
 
   // ==========================================================
   // STEP
@@ -705,7 +609,6 @@ export default function CombinedForm() {
       1,
     );
 
-
   // ==========================================================
   // CLINICAL FORM
   // ==========================================================
@@ -717,7 +620,6 @@ export default function CombinedForm() {
     useState<ClinicalPatient>(
       DEFAULT_VALUES,
     );
-
 
   // ==========================================================
   // X-RAY
@@ -731,7 +633,6 @@ export default function CombinedForm() {
       null,
     );
 
-
   const [
     preview,
     setPreview,
@@ -740,15 +641,11 @@ export default function CombinedForm() {
       null,
     );
 
-
   const [
     dragging,
     setDragging,
   ] =
-    useState(
-      false,
-    );
-
+    useState(false);
 
   // ==========================================================
   // ANALYSIS
@@ -760,13 +657,11 @@ export default function CombinedForm() {
   ] =
     useState(false);
 
-
   const [
     error,
     setError,
   ] =
     useState("");
-
 
   // ==========================================================
   // CLINICAL UPDATE
@@ -780,7 +675,6 @@ export default function CombinedForm() {
     setClinicalForm(
       previous => ({
         ...previous,
-
         [feature]:
           value,
       }),
@@ -789,34 +683,21 @@ export default function CombinedForm() {
     setError("");
   };
 
-
   // ==========================================================
   // RESET
   // ==========================================================
 
   const handleReset = () => {
 
-    setClinicalForm(
-      {
-        ...DEFAULT_VALUES,
-      },
-    );
+    setClinicalForm({
+      ...DEFAULT_VALUES,
+    });
 
-    setFile(
-      null,
-    );
-
-    setPreview(
-      null,
-    );
-
-    setStep(
-      1,
-    );
-
+    setFile(null);
+    setPreview(null);
+    setStep(1);
     setError("");
   };
-
 
   // ==========================================================
   // VALIDATE CLINICAL FORM
@@ -835,18 +716,15 @@ export default function CombinedForm() {
             field.feature
           ];
 
-
         if (
           !Number.isFinite(
             value,
           )
         ) {
-
           return (
             `${field.label} is required.`
           );
         }
-
 
         if (
           value <
@@ -854,26 +732,22 @@ export default function CombinedForm() {
           value >
             field.max
         ) {
-
           return (
             `${field.label} must be between ` +
             `${field.min} and ${field.max}.`
           );
         }
 
-
         if (
           !Number.isInteger(
             value,
           )
         ) {
-
           return (
             `${field.label} must be a whole number.`
           );
         }
       }
-
 
       if (
         clinicalForm.Gender !==
@@ -881,16 +755,13 @@ export default function CombinedForm() {
         clinicalForm.Gender !==
           2
       ) {
-
         return (
           "Please select a valid sex."
         );
       }
 
-
       return null;
     };
-
 
   // ==========================================================
   // CONTINUE TO IMAGING
@@ -900,15 +771,12 @@ export default function CombinedForm() {
 
     setError("");
 
-
     const validationError =
       validateClinical();
-
 
     if (
       validationError
     ) {
-
       setError(
         validationError,
       );
@@ -916,24 +784,16 @@ export default function CombinedForm() {
       return;
     }
 
-
     sessionStorage.setItem(
       "conan_combined_clinical",
-
       JSON.stringify({
-
         patient:
           clinicalForm,
-
       }),
     );
 
-
-    setStep(
-      2,
-    );
+    setStep(2);
   };
-
 
   // ==========================================================
   // FILE HANDLING
@@ -945,14 +805,12 @@ export default function CombinedForm() {
 
     setError("");
 
-
     if (
       !selectedFile.type ||
       !selectedFile.type.startsWith(
         "image/",
       )
     ) {
-
       setError(
         "Please upload a valid chest X-ray image.",
       );
@@ -960,12 +818,10 @@ export default function CombinedForm() {
       return;
     }
 
-
     if (
       selectedFile.size <=
       0
     ) {
-
       setError(
         "The uploaded image is empty.",
       );
@@ -973,22 +829,18 @@ export default function CombinedForm() {
       return;
     }
 
-
     setFile(
       selectedFile,
     );
 
-
     const reader =
       new FileReader();
-
 
     reader.onload =
       event => {
 
         const value =
           event.target?.result;
-
 
         setPreview(
           typeof value ===
@@ -998,12 +850,10 @@ export default function CombinedForm() {
         );
       };
 
-
     reader.readAsDataURL(
       selectedFile,
     );
   };
-
 
   const handleDrop = (
     event: React.DragEvent<HTMLDivElement>,
@@ -1011,40 +861,26 @@ export default function CombinedForm() {
 
     event.preventDefault();
 
-
-    setDragging(
-      false,
-    );
-
+    setDragging(false);
 
     const droppedFile =
       event.dataTransfer.files?.[0];
 
-
     if (
       droppedFile
     ) {
-
       handleFile(
         droppedFile,
       );
     }
   };
 
-
   const clearFile = () => {
 
-    setFile(
-      null,
-    );
-
-    setPreview(
-      null,
-    );
-
+    setFile(null);
+    setPreview(null);
     setError("");
   };
-
 
   // ==========================================================
   // ANALYZE COMBINED
@@ -1057,17 +893,11 @@ export default function CombinedForm() {
         !file ||
         analyzing
       ) {
-
         return;
       }
 
-
       setError("");
-
-      setAnalyzing(
-        true,
-      );
-
+      setAnalyzing(true);
 
       try {
 
@@ -1097,14 +927,12 @@ export default function CombinedForm() {
             },
           );
 
-
         const clinicalData =
           await readJson<
             ClinicalRiskResult
           >(
             clinicalResponse,
           );
-
 
         // ----------------------------------------------------
         // HTTP VALIDATION
@@ -1113,14 +941,12 @@ export default function CombinedForm() {
         if (
           !clinicalResponse.ok
         ) {
-
           throw new Error(
             clinicalData?.risk
               ? "Clinical analysis failed."
               : "Clinical risk analysis failed.",
           );
         }
-
 
         // ----------------------------------------------------
         // SUCCESS VALIDATION
@@ -1130,12 +956,10 @@ export default function CombinedForm() {
           clinicalData.success !==
           true
         ) {
-
           throw new Error(
             "The clinical model did not return a successful prediction.",
           );
         }
-
 
         // ----------------------------------------------------
         // RISK VALIDATION
@@ -1149,28 +973,24 @@ export default function CombinedForm() {
           clinicalData.risk !==
             "HIGH"
         ) {
-
           throw new Error(
             "The clinical model returned an invalid risk category.",
           );
         }
-
 
         const clinicalRiskLevel =
           convertRiskLevel(
             clinicalData.risk,
           );
 
-
         // ----------------------------------------------------
-        // PRIMARY PROBABILITY
+        // PRIMARY CONTINUOUS PROBABILITY
         // ----------------------------------------------------
 
         const clinicalProbability =
           Number(
             clinicalData.probability,
           );
-
 
         if (
           !Number.isFinite(
@@ -1179,37 +999,20 @@ export default function CombinedForm() {
           clinicalProbability < 0 ||
           clinicalProbability > 1
         ) {
-
           throw new Error(
             "The clinical model returned an invalid probability.",
           );
         }
 
-
         // ====================================================
         // CLINICAL 3-CLASS DISTRIBUTION
         // ====================================================
         //
-        // Preferred source:
+        // This distribution is retained only for displaying
+        // or storing the clinical result.
         //
-        //   clinicalData.probabilities.low
-        //   clinicalData.probabilities.moderate
-        //   clinicalData.probabilities.high
-        //
-        // Fallback:
-        //
-        // Current /api/clinical-risk may only return:
-        //
-        //   risk
-        //   probability
-        //
-        // In that case the returned probability is assigned
-        // to the predicted class and the remaining probability
-        // mass is divided between the other two classes.
-        //
-        // This fallback allows the application to continue
-        // functioning, but should NOT be used as validated
-        // calibrated class probabilities for research metrics.
+        // It is NOT used for late fusion.
+        // Late fusion uses clinicalProbability directly.
         // ====================================================
 
         let clinicalDistribution: {
@@ -1218,13 +1021,11 @@ export default function CombinedForm() {
           high: number;
         };
 
-
         const hasFullClinicalDistribution =
           clinicalData.probabilities &&
           clinicalData.probabilities.low !== undefined &&
           clinicalData.probabilities.moderate !== undefined &&
           clinicalData.probabilities.high !== undefined;
-
 
         if (
           hasFullClinicalDistribution
@@ -1245,7 +1046,6 @@ export default function CombinedForm() {
               clinicalData.probabilities?.high,
             );
 
-
           if (
             !Number.isFinite(low) ||
             !Number.isFinite(moderate) ||
@@ -1257,32 +1057,26 @@ export default function CombinedForm() {
             moderate > 1 ||
             high > 1
           ) {
-
             throw new Error(
               "The clinical model returned invalid LOW/MODERATE/HIGH probabilities.",
             );
           }
-
 
           const total =
             low +
             moderate +
             high;
 
-
           if (
             !Number.isFinite(total) ||
             total <= 0
           ) {
-
             throw new Error(
               "The clinical probability distribution is invalid.",
             );
           }
 
-
           clinicalDistribution = {
-
             low:
               low / total,
 
@@ -1291,7 +1085,6 @@ export default function CombinedForm() {
 
             high:
               high / total,
-
           };
 
         }
@@ -1308,14 +1101,12 @@ export default function CombinedForm() {
                 clinicalProbability,
             );
 
-
           if (
             clinicalRiskLevel ===
             "low"
           ) {
 
             clinicalDistribution = {
-
               low:
                 clinicalProbability,
 
@@ -1324,7 +1115,6 @@ export default function CombinedForm() {
 
               high:
                 remainder / 2,
-
             };
 
           }
@@ -1334,7 +1124,6 @@ export default function CombinedForm() {
           ) {
 
             clinicalDistribution = {
-
               low:
                 remainder / 2,
 
@@ -1343,14 +1132,12 @@ export default function CombinedForm() {
 
               high:
                 remainder / 2,
-
             };
 
           }
           else {
 
             clinicalDistribution = {
-
               low:
                 remainder / 2,
 
@@ -1359,17 +1146,13 @@ export default function CombinedForm() {
 
               high:
                 clinicalProbability,
-
             };
-
           }
-
 
           console.warn(
             "[CONAN Clinical] /api/clinical-risk did not return full LOW/MODERATE/HIGH probabilities. Using fallback distribution.",
           );
         }
-
 
         // ----------------------------------------------------
         // FINAL DISTRIBUTION CHECK
@@ -1380,7 +1163,6 @@ export default function CombinedForm() {
           clinicalDistribution.moderate +
           clinicalDistribution.high;
 
-
         if (
           Math.abs(
             clinicalDistributionTotal -
@@ -1388,12 +1170,10 @@ export default function CombinedForm() {
           ) >
           1e-6
         ) {
-
           throw new Error(
             "The normalized clinical probability distribution is invalid.",
           );
         }
-
 
         // ----------------------------------------------------
         // DEBUG
@@ -1416,7 +1196,6 @@ export default function CombinedForm() {
           },
         );
 
-
         // ====================================================
         // 2. IMAGING MODEL
         // ====================================================
@@ -1424,13 +1203,11 @@ export default function CombinedForm() {
         const imagingFormData =
           new FormData();
 
-
         imagingFormData.append(
           "file",
           file,
           file.name,
         );
-
 
         const imagingResponse =
           await fetch(
@@ -1447,14 +1224,12 @@ export default function CombinedForm() {
             },
           );
 
-
         const imagingData =
           await readJson<
             ImagingApiResponse
           >(
             imagingResponse,
           );
-
 
         // ----------------------------------------------------
         // HTTP ERROR
@@ -1463,7 +1238,6 @@ export default function CombinedForm() {
         if (
           !imagingResponse.ok
         ) {
-
           throw new Error(
             imagingData.error ||
               imagingData.detail ||
@@ -1471,7 +1245,6 @@ export default function CombinedForm() {
               "Imaging analysis failed.",
           );
         }
-
 
         // ----------------------------------------------------
         // CHEST X-RAY VALIDATION
@@ -1483,13 +1256,11 @@ export default function CombinedForm() {
           imagingData.input_valid ===
             false
         ) {
-
           throw new Error(
             imagingData.message ||
               "The uploaded image does not appear to be a suitable chest X-ray.",
           );
         }
-
 
         // ----------------------------------------------------
         // SUCCESS VALIDATION
@@ -1499,14 +1270,12 @@ export default function CombinedForm() {
           imagingData.success !==
           true
         ) {
-
           throw new Error(
             imagingData.error ||
               imagingData.message ||
               "The imaging model could not analyze the X-ray.",
           );
         }
-
 
         // ----------------------------------------------------
         // IMAGING PROBABILITY
@@ -1517,7 +1286,6 @@ export default function CombinedForm() {
             imagingData.probability,
           );
 
-
         if (
           !Number.isFinite(
             imagingProbability,
@@ -1525,12 +1293,10 @@ export default function CombinedForm() {
           imagingProbability < 0 ||
           imagingProbability > 1
         ) {
-
           throw new Error(
             "The imaging model returned an invalid probability.",
           );
         }
-
 
         // ----------------------------------------------------
         // IMAGING RISK LEVEL
@@ -1540,17 +1306,12 @@ export default function CombinedForm() {
           imagingData.risk_level ??
           (
             imagingProbability < 0.05
-
               ? "low"
-
               : imagingProbability <=
                   0.65
-
                 ? "moderate"
-
                 : "high"
           );
-
 
         // ====================================================
         // 3. SAVE CLINICAL RESULT
@@ -1560,7 +1321,6 @@ export default function CombinedForm() {
           buildClinicalFactors(
             clinicalForm,
           );
-
 
         const clinicalResult:
           PredictionResult = {
@@ -1587,12 +1347,9 @@ export default function CombinedForm() {
             new Date(),
         };
 
-
         sessionStorage.setItem(
           "conan_clinical_result",
-
           JSON.stringify({
-
             patient:
               clinicalForm,
 
@@ -1601,10 +1358,8 @@ export default function CombinedForm() {
 
             distribution:
               clinicalDistribution,
-
           }),
         );
-
 
         // ====================================================
         // 4. SAVE IMAGING RESULT
@@ -1612,7 +1367,6 @@ export default function CombinedForm() {
 
         sessionStorage.setItem(
           "conan_imaging_result",
-
           JSON.stringify({
 
             probability:
@@ -1633,13 +1387,11 @@ export default function CombinedForm() {
               file.name,
 
             thresholds: {
-
               low:
                 0.05,
 
               high:
                 0.65,
-
             },
 
             modelFinding:
@@ -1649,44 +1401,38 @@ export default function CombinedForm() {
             explainability:
               imagingData.explainability ??
               null,
-
           }),
         );
 
-
         // ====================================================
-        // 5. LATE FUSION — MODEL 3
+        // 5. CONTINUOUS LATE FUSION — MODEL 3
         // ====================================================
         //
-        // IMPORTANT:
+        // The frontend sends the two continuous probabilities:
         //
-        // The frontend does NOT perform the fusion itself.
+        //   P_CLINICAL
+        //   P_IMAGING
         //
-        // It sends:
+        // The backend performs:
         //
-        //   clinicalDistribution
+        //   P_COMBINED
+        //      = 0.50(P_CLINICAL)
+        //      + 0.50(P_IMAGING)
         //
-        //   imagingProbability
-        //
-        // to:
-        //
-        //   /api/late-fusion
-        //
-        // The backend / lib/lateFusion.ts is responsible
-        // for the configured fusion weights.
+        // No artificial three-class imaging distribution
+        // is created.
         // ====================================================
 
         console.log(
           "[CONAN Fusion] Sending:",
           {
-            clinical:
-              clinicalDistribution,
+            clinicalProbability:
+              clinicalProbability,
 
             imagingProbability:
               imagingProbability,
           },
         );
-
 
         const fusionResponse =
           await fetch(
@@ -1702,13 +1448,11 @@ export default function CombinedForm() {
 
               body:
                 JSON.stringify({
-
-                  clinical:
-                    clinicalDistribution,
+                  clinicalProbability:
+                    clinicalProbability,
 
                   imagingProbability:
                     imagingProbability,
-
                 }),
 
               cache:
@@ -1716,14 +1460,12 @@ export default function CombinedForm() {
             },
           );
 
-
         const fusionData =
           await readJson<
             FusionResponse
           >(
             fusionResponse,
           );
-
 
         // ----------------------------------------------------
         // FUSION VALIDATION
@@ -1734,34 +1476,39 @@ export default function CombinedForm() {
           fusionData.success !==
             true
         ) {
-
           throw new Error(
             fusionData.error ||
               "Combined late-fusion analysis failed.",
           );
         }
 
-
         if (
           !fusionData.riskLevel
         ) {
-
           throw new Error(
             "The late-fusion model did not return a final risk category.",
           );
         }
 
-
         const finalRiskLevel =
           fusionData.riskLevel;
 
+        // ====================================================
+        // IMPORTANT:
+        // The NEW API returns:
+        //
+        //   combinedProbability
+        //
+        // NOT:
+        //
+        //   finalProbability
+        // ====================================================
 
         const finalProbability =
           Number(
-            fusionData.finalProbability ??
+            fusionData.combinedProbability ??
               0,
           );
-
 
         if (
           !Number.isFinite(
@@ -1770,12 +1517,10 @@ export default function CombinedForm() {
           finalProbability < 0 ||
           finalProbability > 1
         ) {
-
           throw new Error(
-            "The late-fusion model returned an invalid final probability.",
+            "The late-fusion model returned an invalid combined probability.",
           );
         }
-
 
         // ====================================================
         // 6. COMBINED FACTORS
@@ -1784,11 +1529,8 @@ export default function CombinedForm() {
         const combinedFactors =
           clinicalFactors.length >
           0
-
             ? clinicalFactors
-
             : [
-
                 {
                   name:
                     "Clinical assessment completed",
@@ -1799,9 +1541,7 @@ export default function CombinedForm() {
                   present:
                     true,
                 },
-
               ];
-
 
         // ====================================================
         // 7. FINAL COMBINED RESULT
@@ -1810,12 +1550,11 @@ export default function CombinedForm() {
         const finalProbabilityPercent =
           Number(
             (
-              fusionData.finalProbabilityPercent ??
+              fusionData.combinedProbabilityPercent ??
               finalProbability *
                 100
             ).toFixed(2),
           );
-
 
         const combinedResult:
           PredictionResult = {
@@ -1841,19 +1580,16 @@ export default function CombinedForm() {
             new Date(),
         };
 
-
         // ====================================================
         // 8. SAVE FUSION OUTPUT
         // ====================================================
 
         sessionStorage.setItem(
           "conan_fusion_result",
-
           JSON.stringify(
             fusionData,
           ),
         );
-
 
         // ====================================================
         // 9. SAVE COMPLETE COMBINED SESSION
@@ -1861,7 +1597,6 @@ export default function CombinedForm() {
 
         sessionStorage.setItem(
           "conan_combined_result",
-
           JSON.stringify({
 
             patient:
@@ -1870,11 +1605,13 @@ export default function CombinedForm() {
             clinical:
               clinicalData,
 
+            clinicalProbability:
+              clinicalProbability,
+
             clinicalDistribution:
               clinicalDistribution,
 
             imaging: {
-
               probability:
                 imagingProbability,
 
@@ -1888,15 +1625,12 @@ export default function CombinedForm() {
               explainability:
                 imagingData.explainability ??
                 null,
-
             },
 
             fusion:
               fusionData,
-
           }),
         );
-
 
         // ====================================================
         // 10. SAVE SHARED RESULT
@@ -1904,22 +1638,18 @@ export default function CombinedForm() {
 
         sessionStorage.setItem(
           "conan_result",
-
           JSON.stringify(
             combinedResult,
           ),
         );
 
-
         if (
           user
         ) {
-
           saveResult(
             combinedResult,
           );
         }
-
 
         // ====================================================
         // 11. RESULTS PAGE
@@ -1928,8 +1658,8 @@ export default function CombinedForm() {
         router.push(
           "/results",
         );
-
       }
+
       catch (
         err
       ) {
@@ -1939,14 +1669,13 @@ export default function CombinedForm() {
           err,
         );
 
-
         setError(
           err instanceof Error
             ? err.message
             : "Unable to complete the combined assessment.",
         );
-
       }
+
       finally {
 
         setAnalyzing(
@@ -1955,13 +1684,11 @@ export default function CombinedForm() {
       }
     };
 
-
   // ==========================================================
   // RENDER
   // ==========================================================
 
   return (
-
     <div className="space-y-6 animate-fadeIn">
 
       {/* ======================================================
@@ -1976,27 +1703,20 @@ export default function CombinedForm() {
 
         </div>
 
-
         <div>
 
           <h1 className="text-xl font-bold text-slate-800">
-
             Combined Multimodal Assessment
-
           </h1>
 
-
           <p className="text-sm text-slate-500">
-
             Clinical assessment + chest X-ray imaging
             combined by the CONAN late-fusion model.
-
           </p>
 
         </div>
 
       </div>
-
 
       {/* ======================================================
           DISCLAIMER
@@ -2020,7 +1740,6 @@ export default function CombinedForm() {
 
       </div>
 
-
       {/* ======================================================
           STEP INDICATOR
           ====================================================== */}
@@ -2035,25 +1754,18 @@ export default function CombinedForm() {
 
               step > 1 ||
                 step === 1
-
                 ? "bg-teal-600 text-white"
-
                 : "bg-slate-200 text-slate-500",
             )}
           >
 
             {step > 1 ? (
-
               <CheckCircle className="w-4 h-4" />
-
             ) : (
-
               "1"
-
             )}
 
           </div>
-
 
           <span
             className={cn(
@@ -2064,11 +1776,8 @@ export default function CombinedForm() {
                 : "text-slate-400",
             )}
           >
-
             Clinical Assessment
-
           </span>
-
 
           <div className="flex-1 h-0.5 bg-slate-200 mx-2">
 
@@ -2086,7 +1795,6 @@ export default function CombinedForm() {
 
         </div>
 
-
         <div className="flex items-center gap-2">
 
           <div
@@ -2098,11 +1806,8 @@ export default function CombinedForm() {
                 : "bg-slate-200 text-slate-500",
             )}
           >
-
             2
-
           </div>
-
 
           <span
             className={cn(
@@ -2113,22 +1818,18 @@ export default function CombinedForm() {
                 : "text-slate-400",
             )}
           >
-
             Chest X-Ray
-
           </span>
 
         </div>
 
       </div>
 
-
       {/* ======================================================
           STEP 1
           ====================================================== */}
 
       {step === 1 && (
-
         <>
 
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
@@ -2147,7 +1848,6 @@ export default function CombinedForm() {
 
           </div>
 
-
           {CATEGORIES.map(
             category => {
 
@@ -2158,20 +1858,15 @@ export default function CombinedForm() {
                     category,
                 );
 
-
               return (
-
                 <div
                   key={category}
                   className="bg-white border border-slate-200 rounded-2xl p-5"
                 >
 
                   <h2 className="text-sm font-semibold text-slate-700 mb-4 pb-2 border-b border-slate-100">
-
                     {category}
-
                   </h2>
-
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -2183,9 +1878,7 @@ export default function CombinedForm() {
                             field.feature
                           ];
 
-
                         return (
-
                           <div
                             key={
                               field.feature
@@ -2203,35 +1896,26 @@ export default function CombinedForm() {
                                   }
                                   className="block text-sm font-semibold text-slate-700"
                                 >
-
                                   {
                                     field.label
                                   }
-
                                 </label>
 
-
                                 <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-
                                   {
                                     field.description
                                   }
-
                                 </p>
 
                               </div>
 
-
                               <span className="min-w-10 text-center px-2 py-1 rounded-lg bg-teal-100 text-teal-700 text-sm font-bold">
-
                                 {
                                   value
                                 }
-
                               </span>
 
                             </div>
-
 
                             {field.feature ===
                             "Gender" ? (
@@ -2272,7 +1956,6 @@ export default function CombinedForm() {
                             ) : (
 
                               <>
-
                                 <input
                                   id={
                                     `combined-${field.feature}`
@@ -2303,7 +1986,6 @@ export default function CombinedForm() {
                                   }
                                 />
 
-
                                 <div className="flex justify-between text-[10px] text-slate-400 mt-1">
 
                                   <span>
@@ -2325,21 +2007,16 @@ export default function CombinedForm() {
                             )}
 
                           </div>
-
                         );
-
                       },
                     )}
 
                   </div>
 
                 </div>
-
               );
-
             },
           )}
-
 
           {error && (
 
@@ -2359,7 +2036,6 @@ export default function CombinedForm() {
 
           )}
 
-
           <div className="bg-white border border-slate-200 rounded-2xl p-5">
 
             <div className="flex items-center justify-between mb-4">
@@ -2367,21 +2043,15 @@ export default function CombinedForm() {
               <div>
 
                 <p className="text-sm font-semibold text-slate-700">
-
                   Step 1 Complete
-
                 </p>
 
-
                 <p className="text-xs text-slate-500 mt-1">
-
                   Your clinical data will be retained and
                   combined with the imaging result.
-
                 </p>
 
               </div>
-
 
               <button
                 type="button"
@@ -2398,7 +2068,6 @@ export default function CombinedForm() {
               </button>
 
             </div>
-
 
             <button
               type="button"
@@ -2417,16 +2086,13 @@ export default function CombinedForm() {
           </div>
 
         </>
-
       )}
-
 
       {/* ======================================================
           STEP 2
           ====================================================== */}
 
       {step === 2 && (
-
         <>
 
           <div className="bg-teal-50 border border-teal-200 rounded-xl px-4 py-3">
@@ -2445,7 +2111,6 @@ export default function CombinedForm() {
 
           </div>
 
-
           {/* UPLOAD */}
 
           <div className="bg-white border border-slate-200 rounded-2xl p-5">
@@ -2455,13 +2120,10 @@ export default function CombinedForm() {
               <ImageIcon className="w-4 h-4 text-purple-600" />
 
               <h2 className="text-sm font-semibold text-slate-700">
-
                 Upload Chest X-Ray
-
               </h2>
 
             </div>
-
 
             {!preview ? (
 
@@ -2469,9 +2131,9 @@ export default function CombinedForm() {
                 onDrop={
                   handleDrop
                 }
+
                 onDragOver={
                   event => {
-
                     event.preventDefault();
 
                     setDragging(
@@ -2479,11 +2141,13 @@ export default function CombinedForm() {
                     );
                   }
                 }
+
                 onDragLeave={() =>
                   setDragging(
                     false,
                   )
                 }
+
                 onClick={() =>
                   document
                     .getElementById(
@@ -2491,39 +2155,30 @@ export default function CombinedForm() {
                     )
                     ?.click()
                 }
+
                 className={cn(
                   "border-2 border-dashed rounded-xl p-12 text-center cursor-pointer transition-all",
 
                   dragging
-
                     ? "border-purple-500 bg-purple-50"
-
                     : "border-slate-300 hover:border-purple-400 hover:bg-purple-50/50",
                 )}
               >
 
                 <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" />
 
-
                 <p className="text-sm font-semibold text-slate-700">
-
                   Drop your chest X-ray here
-
                 </p>
-
 
                 <p className="text-xs text-slate-500 mt-1 mb-4">
-
                   JPG or PNG
-
                 </p>
-
 
                 <button
                   type="button"
                   onClick={
                     event => {
-
                       event.stopPropagation();
 
                       document
@@ -2531,16 +2186,12 @@ export default function CombinedForm() {
                           "combined-xray",
                         )
                         ?.click();
-
                     }
                   }
                   className="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-lg"
                 >
-
                   Browse Files
-
                 </button>
-
 
                 <input
                   id="combined-xray"
@@ -2553,16 +2204,13 @@ export default function CombinedForm() {
                       const selectedFile =
                         event.target.files?.[0];
 
-
                       if (
                         selectedFile
                       ) {
-
                         handleFile(
                           selectedFile,
                         );
                       }
-
                     }
                   }
                 />
@@ -2581,7 +2229,6 @@ export default function CombinedForm() {
                     className="w-full max-h-96 object-contain mx-auto"
                   />
 
-
                   <button
                     type="button"
                     onClick={
@@ -2596,22 +2243,17 @@ export default function CombinedForm() {
 
                 </div>
 
-
                 <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
 
                   <ImageIcon className="w-5 h-5 text-purple-600" />
 
-
                   <div className="flex-1 min-w-0">
 
                     <p className="text-sm font-medium text-slate-700 truncate">
-
                       {
                         file?.name
                       }
-
                     </p>
-
 
                     <p className="text-xs text-slate-500">
 
@@ -2628,11 +2270,8 @@ export default function CombinedForm() {
 
                   </div>
 
-
                   <span className="text-xs text-green-600 font-semibold">
-
                     Ready
-
                   </span>
 
                 </div>
@@ -2642,7 +2281,6 @@ export default function CombinedForm() {
             )}
 
           </div>
-
 
           {/* CLINICAL SUMMARY */}
 
@@ -2668,7 +2306,6 @@ export default function CombinedForm() {
 
           </div>
 
-
           {/* ERROR */}
 
           {error && (
@@ -2688,7 +2325,6 @@ export default function CombinedForm() {
             </div>
 
           )}
-
 
           {/* ACTIONS */}
 
@@ -2713,7 +2349,6 @@ export default function CombinedForm() {
 
               </button>
 
-
               <button
                 type="button"
                 onClick={
@@ -2728,9 +2363,7 @@ export default function CombinedForm() {
 
                   file &&
                   !analyzing
-
                     ? "bg-teal-600 hover:bg-teal-700 text-white"
-
                     : "bg-slate-200 text-slate-400 cursor-not-allowed",
                 )}
               >
@@ -2738,7 +2371,6 @@ export default function CombinedForm() {
                 {analyzing ? (
 
                   <>
-
                     <Loader2 className="w-4 h-4 animate-spin" />
 
                     Analyzing Clinical + Imaging...
@@ -2748,11 +2380,9 @@ export default function CombinedForm() {
                 ) : (
 
                   <>
-
                     Analyze Combined Risk
 
                     <ChevronRight className="w-4 h-4" />
-
                   </>
 
                 )}
@@ -2764,10 +2394,8 @@ export default function CombinedForm() {
           </div>
 
         </>
-
       )}
 
     </div>
-
   );
 }

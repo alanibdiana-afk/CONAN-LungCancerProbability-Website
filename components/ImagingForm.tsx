@@ -19,7 +19,6 @@ import {
 
 import { cn } from "@/lib/utils";
 
-
 // ============================================================
 // CONAN IMAGING MODEL 2
 // ============================================================
@@ -32,19 +31,34 @@ import { cn } from "@/lib/utils";
 //   5% - 65%      MODERATE
 //   > 65%         HIGH
 //
-// The backend additionally returns:
+// The imaging model is hosted on Render through the
+// Next.js /api/imaging-risk route.
 //
-//   model_finding
-//   explainability / Grad-CAM
+// IMPORTANT:
+// The Grad-CAM heatmap can be several MB when returned as
+// Base64. It MUST NOT be stored in sessionStorage because
+// browser sessionStorage has a small storage quota.
 //
-// Those fields are preserved and displayed by
-// ResultsContent.tsx.
+// Therefore:
+//
+//   Small result data -> sessionStorage
+//   Large Grad-CAM   -> IndexedDB
+//
+// This keeps the Render connection and Combined Assessment
+// unchanged.
 // ============================================================
-
 
 const LOW_THRESHOLD = 0.05;
 const HIGH_THRESHOLD = 0.65;
 
+// ============================================================
+// INDEXEDDB CONFIGURATION
+// ============================================================
+
+const CONAN_DB_NAME = "conan-storage";
+const CONAN_DB_VERSION = 1;
+const CONAN_STORE_NAME = "imaging-results";
+const CONAN_GRADCAM_KEY = "latest-gradcam";
 
 // ============================================================
 // TYPES
@@ -55,33 +69,21 @@ type ImagingRiskLevel =
   | "moderate"
   | "high";
 
-
 type ImagingModelFinding = {
   type?: string;
-
   label?: string;
-
   confidence?: number;
-
   attention_region?: string;
-
   attention_concentration?: number;
-
   attention_concentration_percent?: number;
-
   description?: string;
-
   clinical_interpretation?: string;
 };
 
-
 type ImagingAttentionRegion = {
   region_name?: string;
-
   concentration?: number;
-
   centroid_x?: number;
-
   centroid_y?: number;
 
   bounding_box?: {
@@ -92,10 +94,10 @@ type ImagingAttentionRegion = {
   };
 };
 
-
 type ImagingExplainability = {
   method?: string;
 
+  // This is the large Base64 image returned by Render.
   heatmap?: string;
 
   attention_region?: ImagingAttentionRegion;
@@ -104,7 +106,6 @@ type ImagingExplainability = {
 
   warning?: string;
 };
-
 
 type ImagingApiResponse = {
   success?: boolean;
@@ -125,14 +126,264 @@ type ImagingApiResponse = {
 
   risk_level?: ImagingRiskLevel;
 
-  // IMPORTANT:
-  // This comes from the revised Python imaging model.
   model_finding?: ImagingModelFinding;
 
-  // Grad-CAM explanation.
   explainability?: ImagingExplainability;
 };
 
+// ============================================================
+// INDEXEDDB — OPEN DATABASE
+// ============================================================
+
+function openConanDatabase(): Promise<IDBDatabase> {
+
+  return new Promise(
+    (
+      resolve,
+      reject,
+    ) => {
+
+      if (
+        typeof window ===
+        "undefined"
+      ) {
+
+        reject(
+          new Error(
+            "IndexedDB is unavailable during server rendering.",
+          ),
+        );
+
+        return;
+      }
+
+
+      if (
+        !("indexedDB" in window)
+      ) {
+
+        reject(
+          new Error(
+            "IndexedDB is not supported by this browser.",
+          ),
+        );
+
+        return;
+      }
+
+
+      const request =
+        window.indexedDB.open(
+          CONAN_DB_NAME,
+          CONAN_DB_VERSION,
+        );
+
+
+      request.onupgradeneeded =
+        () => {
+
+          const db =
+            request.result;
+
+
+          if (
+            !db.objectStoreNames.contains(
+              CONAN_STORE_NAME,
+            )
+          ) {
+
+            db.createObjectStore(
+              CONAN_STORE_NAME,
+            );
+          }
+        };
+
+
+      request.onsuccess =
+        () => {
+
+          resolve(
+            request.result,
+          );
+        };
+
+
+      request.onerror =
+        () => {
+
+          reject(
+            request.error ??
+              new Error(
+                "Unable to open CONAN browser storage.",
+              ),
+          );
+        };
+    },
+  );
+}
+
+// ============================================================
+// INDEXEDDB — SAVE GRAD-CAM
+// ============================================================
+
+async function saveGradCam(
+  heatmap: string,
+): Promise<void> {
+
+  if (
+    !heatmap
+  ) {
+
+    return;
+  }
+
+
+  const db =
+    await openConanDatabase();
+
+
+  return new Promise(
+    (
+      resolve,
+      reject,
+    ) => {
+
+      const transaction =
+        db.transaction(
+          CONAN_STORE_NAME,
+          "readwrite",
+        );
+
+
+      const store =
+        transaction.objectStore(
+          CONAN_STORE_NAME,
+        );
+
+
+      store.put(
+        heatmap,
+        CONAN_GRADCAM_KEY,
+      );
+
+
+      transaction.oncomplete =
+        () => {
+
+          db.close();
+
+          resolve();
+        };
+
+
+      transaction.onerror =
+        () => {
+
+          db.close();
+
+          reject(
+            transaction.error ??
+              new Error(
+                "Unable to save Grad-CAM explanation.",
+              ),
+          );
+        };
+
+
+      transaction.onabort =
+        () => {
+
+          db.close();
+
+          reject(
+            transaction.error ??
+              new Error(
+                "Grad-CAM storage transaction was aborted.",
+              ),
+          );
+        };
+    },
+  );
+}
+
+// ============================================================
+// INDEXEDDB — REMOVE PREVIOUS GRAD-CAM
+// ============================================================
+
+async function clearStoredGradCam(): Promise<void> {
+
+  try {
+
+    const db =
+      await openConanDatabase();
+
+
+    await new Promise<void>(
+      (
+        resolve,
+        reject,
+      ) => {
+
+        const transaction =
+          db.transaction(
+            CONAN_STORE_NAME,
+            "readwrite",
+          );
+
+
+        const store =
+          transaction.objectStore(
+            CONAN_STORE_NAME,
+          );
+
+
+        store.delete(
+          CONAN_GRADCAM_KEY,
+        );
+
+
+        transaction.oncomplete =
+          () => {
+
+            db.close();
+
+            resolve();
+          };
+
+
+        transaction.onerror =
+          () => {
+
+            db.close();
+
+            reject(
+              transaction.error,
+            );
+          };
+
+
+        transaction.onabort =
+          () => {
+
+            db.close();
+
+            reject(
+              transaction.error,
+            );
+          };
+      },
+    );
+
+  } catch (
+    error
+  ) {
+
+    console.warn(
+      "[CONAN imaging] Could not clear stored Grad-CAM:",
+      error,
+    );
+  }
+}
 
 // ============================================================
 // HELPER — RISK CATEGORY
@@ -162,7 +413,6 @@ function classifyImagingRisk(
 
   return "high";
 }
-
 
 // ============================================================
 // HELPER — SAFE JSON RESPONSE
@@ -209,7 +459,6 @@ async function readJson<T>(
   }
 }
 
-
 // ============================================================
 // COMPONENT
 // ============================================================
@@ -226,7 +475,6 @@ export default function ImagingForm() {
   } =
     useApp();
 
-
   // ==========================================================
   // FILE
   // ==========================================================
@@ -238,7 +486,6 @@ export default function ImagingForm() {
     useState<File | null>(
       null,
     );
-
 
   // ==========================================================
   // IMAGE PREVIEW
@@ -252,7 +499,6 @@ export default function ImagingForm() {
       null,
     );
 
-
   // ==========================================================
   // DRAG STATE
   // ==========================================================
@@ -262,7 +508,6 @@ export default function ImagingForm() {
     setDragging,
   ] =
     useState(false);
-
 
   // ==========================================================
   // ANALYSIS STATE
@@ -274,7 +519,6 @@ export default function ImagingForm() {
   ] =
     useState(false);
 
-
   // ==========================================================
   // ERROR STATE
   // ==========================================================
@@ -284,7 +528,6 @@ export default function ImagingForm() {
     setError,
   ] =
     useState("");
-
 
   // ==========================================================
   // HANDLE FILE
@@ -354,7 +597,6 @@ export default function ImagingForm() {
     );
   };
 
-
   // ==========================================================
   // HANDLE DROP
   // ==========================================================
@@ -384,7 +626,6 @@ export default function ImagingForm() {
       );
     }
   };
-
 
   // ==========================================================
   // CLEAR FILE
@@ -419,7 +660,6 @@ export default function ImagingForm() {
     }
   };
 
-
   // ==========================================================
   // ANALYZE CHEST X-RAY
   // ==========================================================
@@ -435,9 +675,7 @@ export default function ImagingForm() {
     }
 
 
-    setError(
-      "",
-    );
+    setError("");
 
 
     setAnalyzing(
@@ -469,9 +707,14 @@ export default function ImagingForm() {
         file.size,
       );
 
-
       // ======================================================
       // 2. CALL NEXT.JS IMAGING API
+      // ======================================================
+      //
+      // This remains unchanged.
+      //
+      // Next.js /api/imaging-risk is still connected to
+      // the Render FastAPI imaging model.
       // ======================================================
 
       const response =
@@ -495,9 +738,8 @@ export default function ImagingForm() {
         response.status,
       );
 
-
       // ======================================================
-      // 3. READ COMPLETE RESPONSE
+      // 3. READ RESPONSE
       // ======================================================
 
       const data =
@@ -512,7 +754,6 @@ export default function ImagingForm() {
         "[CONAN imaging] API response:",
         data,
       );
-
 
       // ======================================================
       // 4. HTTP ERROR
@@ -529,7 +770,6 @@ export default function ImagingForm() {
             `Imaging request failed with HTTP ${response.status}.`,
         );
       }
-
 
       // ======================================================
       // 5. INPUT VALIDATION
@@ -548,7 +788,6 @@ export default function ImagingForm() {
         );
       }
 
-
       // ======================================================
       // 6. SUCCESS VALIDATION
       // ======================================================
@@ -564,7 +803,6 @@ export default function ImagingForm() {
             "The imaging model could not analyze the X-ray.",
         );
       }
-
 
       // ======================================================
       // 7. PROBABILITY
@@ -591,13 +829,8 @@ export default function ImagingForm() {
         );
       }
 
-
       // ======================================================
       // 8. RISK CATEGORY
-      // ======================================================
-      //
-      // Prefer backend classification.
-      // Fall back to the same CONAN thresholds.
       // ======================================================
 
       const riskLevel =
@@ -605,7 +838,6 @@ export default function ImagingForm() {
         classifyImagingRisk(
           probability,
         );
-
 
       // ======================================================
       // 9. PERCENTAGE
@@ -619,25 +851,13 @@ export default function ImagingForm() {
           ).toFixed(2),
         );
 
-
       // ======================================================
       // 10. MODEL FINDING
-      // ======================================================
-      //
-      // IMPORTANT:
-      //
-      // This is the revised dynamic finding generated by
-      // the Python backend, for example:
-      //
-      // "Strong model attention in the central image region"
-      //
-      // DO NOT replace this with a hard-coded generic label.
       // ======================================================
 
       const modelFinding =
         data.model_finding ??
         null;
-
 
       // ======================================================
       // 11. EXPLAINABILITY
@@ -646,7 +866,6 @@ export default function ImagingForm() {
       const explainability =
         data.explainability ??
         null;
-
 
       // ======================================================
       // 12. HUMAN-READABLE SUMMARY
@@ -674,7 +893,6 @@ export default function ImagingForm() {
           ` ${modelFinding.label}.`;
       }
 
-
       // ======================================================
       // 13. IMPACT
       // ======================================================
@@ -696,7 +914,6 @@ export default function ImagingForm() {
 
             : "low";
 
-
       // ======================================================
       // 14. SHARED PREDICTION RESULT
       // ======================================================
@@ -708,7 +925,6 @@ export default function ImagingForm() {
           "imaging",
 
         riskLevel:
-
           riskLevel,
 
         confidence:
@@ -742,39 +958,98 @@ export default function ImagingForm() {
 
       };
 
+      // ======================================================
+      // 15. STORE GRAD-CAM IN INDEXEDDB
+      // ======================================================
+      //
+      // THIS IS THE FIX.
+      //
+      // The heatmap can be several MB as Base64 and therefore
+      // must NOT be put inside sessionStorage.
+      // ======================================================
+
+      const heatmap =
+        explainability?.heatmap;
+
+
+      await clearStoredGradCam();
+
+
+      if (
+        heatmap
+      ) {
+
+        try {
+
+          await saveGradCam(
+            heatmap,
+          );
+
+
+          console.log(
+            "[CONAN imaging] Grad-CAM saved to IndexedDB.",
+          );
+
+        } catch (
+          storageError
+        ) {
+
+          console.warn(
+            "[CONAN imaging] Grad-CAM could not be stored in IndexedDB:",
+            storageError,
+          );
+
+          // Do NOT fail the complete prediction merely
+          // because the optional visualization could not
+          // be stored.
+        }
+      }
 
       // ======================================================
-      // 15. SAVE COMPLETE IMAGING RESULT
+      // 16. SAVE SMALL IMAGING RESULT TO SESSION STORAGE
       // ======================================================
       //
-      // This is the most important section.
+      // IMPORTANT:
       //
-      // ResultsContent.tsx reads "conan_imaging_result".
+      // Do NOT put explainability.heatmap here.
       //
-      // We preserve:
-      //
-      //   probability
-      //   probabilityPercent
-      //   riskLevel
-      //   thresholds
-      //   filename
-      //   modelFinding
-      //   explainability
-      //
+      // Only the small metadata is stored.
       // ======================================================
+
+      const explainabilityMetadata =
+        explainability
+          ? {
+
+              method:
+                explainability.method,
+
+              attention_region:
+                explainability.attention_region,
+
+              interpretation:
+                explainability.interpretation,
+
+              warning:
+                explainability.warning,
+
+              hasHeatmap:
+                Boolean(
+                  heatmap,
+                ),
+
+            }
+          : null;
+
 
       const completeImagingResult = {
 
         probability:
-
           probability,
 
         probabilityPercent:
-
           probabilityPercent,
 
         riskLevel:
-
           riskLevel,
 
         thresholds: {
@@ -788,16 +1063,13 @@ export default function ImagingForm() {
         },
 
         fileName:
-
           file.name,
 
         modelFinding:
-
           modelFinding,
 
         explainability:
-
-          explainability,
+          explainabilityMetadata,
 
       };
 
@@ -810,13 +1082,11 @@ export default function ImagingForm() {
         ),
       );
 
-
       // ======================================================
-      // 16. SAVE RAW MODEL OUTPUT
+      // 17. SAVE RAW MODEL OUTPUT
       // ======================================================
       //
-      // Helpful for Combined and debugging.
-      //
+      // Again, the large heatmap is excluded.
       // ======================================================
 
       sessionStorage.setItem(
@@ -825,32 +1095,26 @@ export default function ImagingForm() {
         JSON.stringify({
 
           probability:
-
             probability,
 
           probability_percent:
-
             data.probability_percent ??
             probabilityPercent,
 
           risk_level:
-
             riskLevel,
 
           model_finding:
-
             modelFinding,
 
           explainability:
-
-            explainability,
+            explainabilityMetadata,
 
         }),
       );
 
-
       // ======================================================
-      // 17. SAVE SHARED RESULT
+      // 18. SAVE SHARED RESULT
       // ======================================================
 
       sessionStorage.setItem(
@@ -861,9 +1125,8 @@ export default function ImagingForm() {
         ),
       );
 
-
       // ======================================================
-      // 18. SAVE TO APP CONTEXT
+      // 19. SAVE TO APP CONTEXT
       // ======================================================
 
       if (
@@ -875,9 +1138,8 @@ export default function ImagingForm() {
         );
       }
 
-
       // ======================================================
-      // 19. DEBUG CONFIRMATION
+      // 20. DEBUG CONFIRMATION
       // ======================================================
 
       console.log(
@@ -892,20 +1154,26 @@ export default function ImagingForm() {
 
           modelFinding,
 
-          explainability,
+          hasGradCam:
+            Boolean(
+              heatmap,
+            ),
+
+          gradCamStorage:
+            heatmap
+              ? "IndexedDB"
+              : "None",
 
         },
       );
 
-
       // ======================================================
-      // 20. GO TO RESULTS
+      // 21. GO TO RESULTS
       // ======================================================
 
       router.push(
         "/results",
       );
-
 
     } catch (
       err
@@ -923,7 +1191,6 @@ export default function ImagingForm() {
           : "Unable to analyze the chest X-ray.",
       );
 
-
     } finally {
 
       setAnalyzing(
@@ -931,7 +1198,6 @@ export default function ImagingForm() {
       );
     }
   };
-
 
   // ==========================================================
   // RENDER
@@ -941,10 +1207,7 @@ export default function ImagingForm() {
 
     <div className="space-y-6 animate-fadeIn">
 
-
-      {/* ======================================================
-          HEADER
-          ====================================================== */}
+      {/* HEADER */}
 
       <div className="flex items-center gap-3">
 
@@ -975,10 +1238,7 @@ export default function ImagingForm() {
 
       </div>
 
-
-      {/* ======================================================
-          DISCLAIMER
-          ====================================================== */}
+      {/* DISCLAIMER */}
 
       <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-start gap-2">
 
@@ -999,10 +1259,7 @@ export default function ImagingForm() {
 
       </div>
 
-
-      {/* ======================================================
-          MODEL INFO
-          ====================================================== */}
+      {/* MODEL INFO */}
 
       <div className="bg-purple-50 border border-purple-200 rounded-xl px-4 py-3">
 
@@ -1021,10 +1278,7 @@ export default function ImagingForm() {
 
       </div>
 
-
-      {/* ======================================================
-          THRESHOLDS
-          ====================================================== */}
+      {/* THRESHOLDS */}
 
       <div className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
 
@@ -1050,10 +1304,7 @@ export default function ImagingForm() {
 
       </div>
 
-
-      {/* ======================================================
-          UPLOAD
-          ====================================================== */}
+      {/* UPLOAD */}
 
       <div className="bg-white border border-slate-200 rounded-2xl p-5">
 
@@ -1094,6 +1345,7 @@ export default function ImagingForm() {
                 setDragging(
                   true,
                 );
+
               }
             }
 
@@ -1192,6 +1444,7 @@ export default function ImagingForm() {
                     handleFile(
                       selectedFile,
                     );
+
                   }
 
                 }
@@ -1288,10 +1541,7 @@ export default function ImagingForm() {
 
       </div>
 
-
-      {/* ======================================================
-          ERROR
-          ====================================================== */}
+      {/* ERROR */}
 
       {error && (
 
@@ -1313,10 +1563,7 @@ export default function ImagingForm() {
 
       )}
 
-
-      {/* ======================================================
-          ANALYZE
-          ====================================================== */}
+      {/* ANALYZE */}
 
       <button
 
@@ -1370,10 +1617,7 @@ export default function ImagingForm() {
 
       </button>
 
-
-      {/* ======================================================
-          RESULT INFORMATION
-          ====================================================== */}
+      {/* RESULT INFORMATION */}
 
       <div className="flex items-start gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
 

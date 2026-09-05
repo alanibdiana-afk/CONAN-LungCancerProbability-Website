@@ -8,20 +8,52 @@ import {
 // ============================================================
 // CONAN LATE-FUSION API
 // ============================================================
+//
+// MODEL 3 — COMBINED MULTIMODAL RISK MODEL
+//
+// Inputs:
+//   1. Continuous clinical risk probability
+//   2. Continuous imaging risk probability
+//
+// Fusion:
+//   P_COMBINED
+//      = wC(P_CLINICAL)
+//      + wI(P_IMAGING)
+//
+// Current baseline weights:
+//   Clinical = 50%
+//   Imaging  = 50%
+//
+// ============================================================
+
 
 export async function POST(
   request: Request
 ) {
+
   try {
-    const body = await request.json();
+
+    // ========================================================
+    // READ REQUEST BODY
+    // ========================================================
+
+    const body =
+      await request.json();
+
+
+    // ========================================================
+    // VALIDATE REQUEST BODY
+    // ========================================================
 
     if (
       !body ||
       typeof body !== "object"
     ) {
+
       return NextResponse.json(
         {
           success: false,
+
           error:
             "Invalid late-fusion request body.",
         },
@@ -31,66 +63,84 @@ export async function POST(
       );
     }
 
-    const clinical =
-      body.clinical;
 
-    if (
-      !clinical ||
-      typeof clinical !== "object"
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Clinical probabilities are required.",
-        },
-        {
-          status: 400,
-        }
+    // ========================================================
+    // GET CLINICAL PROBABILITY
+    // ========================================================
+    //
+    // The clinical model must provide a continuous probability
+    // between 0 and 1.
+    //
+    // Accepted formats:
+    //
+    //   clinicalProbability
+    //   clinical_probability
+    //   clinical.probability
+    //
+    // ========================================================
+
+    const clinicalProbability =
+      Number(
+        body.clinicalProbability ??
+        body.clinical_probability ??
+        (
+          body.clinical &&
+          typeof body.clinical === "object"
+            ? body.clinical.probability
+            : undefined
+        )
       );
-    }
 
-    const clinicalLow = Number(
-      clinical.low ??
-      clinical.P_LOW ??
-      clinical.p_low
-    );
 
-    const clinicalModerate = Number(
-      clinical.moderate ??
-      clinical.P_MODERATE ??
-      clinical.p_moderate
-    );
-
-    const clinicalHigh = Number(
-      clinical.high ??
-      clinical.P_HIGH ??
-      clinical.p_high
-    );
+    // ========================================================
+    // GET IMAGING PROBABILITY
+    // ========================================================
+    //
+    // The imaging probability comes directly from the
+    // ResNet-50 imaging API.
+    //
+    // Accepted formats:
+    //
+    //   imagingProbability
+    //   imaging_probability
+    //   imaging.probability
+    //   probability
+    //
+    // ========================================================
 
     const imagingProbability =
       Number(
         body.imagingProbability ??
         body.imaging_probability ??
+        (
+          body.imaging &&
+          typeof body.imaging === "object"
+            ? body.imaging.probability
+            : undefined
+        ) ??
         body.probability
       );
 
+
+    // ========================================================
+    // VALIDATE CLINICAL PROBABILITY
+    // ========================================================
+
     if (
       !Number.isFinite(
-        clinicalLow
+        clinicalProbability
       ) ||
-      !Number.isFinite(
-        clinicalModerate
-      ) ||
-      !Number.isFinite(
-        clinicalHigh
-      )
+      clinicalProbability < 0 ||
+      clinicalProbability > 1
     ) {
+
       return NextResponse.json(
         {
           success: false,
+
           error:
-            "Invalid clinical probabilities.",
+            "Invalid clinical probability. " +
+            "Clinical probability must be between 0 and 1.",
         },
         {
           status: 400,
@@ -98,32 +148,48 @@ export async function POST(
       );
     }
 
+
+    // ========================================================
+    // VALIDATE IMAGING PROBABILITY
+    // ========================================================
+
     if (
       !Number.isFinite(
         imagingProbability
-      )
+      ) ||
+      imagingProbability < 0 ||
+      imagingProbability > 1
     ) {
+
       return NextResponse.json(
         {
           success: false,
+
           error:
-            "Invalid imaging probability.",
+            "Invalid imaging probability. " +
+            "Imaging probability must be between 0 and 1.",
         },
         {
           status: 400,
         }
       );
     }
+
+
+    // ========================================================
+    // PERFORM CONTINUOUS LATE FUSION
+    // ========================================================
 
     const result =
       fuseClinicalAndImaging(
-        {
-          low: clinicalLow,
-          moderate: clinicalModerate,
-          high: clinicalHigh,
-        },
+        clinicalProbability,
         imagingProbability
       );
+
+
+    // ========================================================
+    // RETURN RESULT
+    // ========================================================
 
     return NextResponse.json(
       {
@@ -132,22 +198,48 @@ export async function POST(
         model:
           "CONAN Late-Fusion Multimodal Risk Model",
 
-        ...result,
+        clinicalProbability:
+          result.clinicalProbability,
+
+        imagingProbability:
+          result.imagingProbability,
+
+        combinedProbability:
+          result.combinedProbability,
+
+        combinedProbabilityPercent:
+          result.combinedProbabilityPercent,
+
+        imagingRiskLevel:
+          result.imagingRiskLevel,
+
+        riskLevel:
+          result.riskLevel,
+
+        weights:
+          result.weights,
+
+        validationStatus:
+          result.validationStatus,
       },
       {
         status: 200,
       }
     );
   }
+
   catch (error) {
+
     console.error(
       "[CONAN late fusion] Error:",
       error
     );
 
+
     return NextResponse.json(
       {
         success: false,
+
         error:
           error instanceof Error
             ? error.message
